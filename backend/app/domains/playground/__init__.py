@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
-from app.infrastructure.database import get_async_session
+from app.infrastructure.database import get_db_session
 from app.dependencies import get_current_user_id
 from app.core.logging_config import logger
 

@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.domains.auth.service import AuthService
 from app.domains.auth.schemas import UserRegister
@@ -34,7 +34,8 @@ class TestAuthSchemas:
 
 class TestAuthService:
     @pytest.mark.asyncio
-    async def test_register(self, auth_service, mock_session):
+    @patch("app.domains.auth.service.hash_password", return_value="hashed_pw")
+    async def test_register(self, mock_hash, auth_service, mock_session):
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
@@ -44,4 +45,5 @@ class TestAuthService:
 
         assert result.email == "new@test.com"
         assert result.name == "New User"
+        mock_hash.assert_called_once_with("TestPass1!")
         mock_session.add.assert_called_once()

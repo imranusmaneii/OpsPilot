@@ -2,7 +2,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.database import get_async_session
+from app.infrastructure.database import get_db_session
 from app.dependencies import get_current_user_id
 from app.domains.integrations.service import IntegrationService
 from app.domains.integrations.schemas import (
@@ -17,7 +17,7 @@ from app.domains.integrations.schemas import (
 router = APIRouter(prefix="/integrations", tags=["Integrations"])
 
 
-async def get_service(session: AsyncSession = Depends(get_async_session)) -> IntegrationService:
+async def get_service(session: AsyncSession = Depends(get_db_session)) -> IntegrationService:
     return IntegrationService(session)
 
 

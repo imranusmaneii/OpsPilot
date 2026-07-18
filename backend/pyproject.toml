@@ -1,0 +1,16 @@
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+]
+
+[tool.pytest.ini_options.env]
+DATABASE_URL = "postgresql+asyncpg://test:test@localhost:5433/opspilot_test"
+REDIS_URL = "redis://localhost:6380/0"

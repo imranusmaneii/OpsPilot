@@ -57,6 +57,7 @@ async def upload_document(
 
     try:
         from app.workers.document_tasks import index_document_task
+
         index_document_task.delay(str(result.id), user_id)
     except Exception:
         pass

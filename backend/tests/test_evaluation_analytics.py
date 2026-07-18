@@ -6,6 +6,7 @@ from datetime import datetime
 class TestEvaluationSchemas:
     def test_evaluation_create(self):
         from app.domains.evaluation.schemas import EvaluationCreate
+
         data = EvaluationCreate(
             name="Test Eval",
             dataset=[{"question": "What is AI?", "context": "...", "expected": "..."}],
@@ -16,6 +17,7 @@ class TestEvaluationSchemas:
 
     def test_evaluation_list_response(self):
         from app.domains.evaluation.schemas import EvaluationListResponse, EvaluationResponse
+
         resp = EvaluationListResponse(
             evaluations=[
                 EvaluationResponse(
@@ -35,6 +37,7 @@ class TestEvaluationSchemas:
 class TestAnalyticsSchemas:
     def test_overview_response(self):
         from app.domains.analytics.schemas import OverviewResponse
+
         resp = OverviewResponse(
             total_documents=100,
             total_collections=5,

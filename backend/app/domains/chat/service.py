@@ -27,9 +27,7 @@ class ChatService:
 
     async def list_conversations(self, user_id: str) -> list[Conversation]:
         result = await self.db.execute(
-            select(Conversation)
-            .where(Conversation.user_id == user_id)
-            .order_by(Conversation.updated_at.desc())
+            select(Conversation).where(Conversation.user_id == user_id).order_by(Conversation.updated_at.desc())
         )
         return list(result.scalars().all())
 
@@ -43,14 +41,13 @@ class ChatService:
         conv = result.scalar_one_or_none()
         if not conv:
             from app.core.exceptions import NotFoundException
+
             raise NotFoundException("Conversation", conversation_id)
         return conv
 
     async def get_messages(self, conversation_id: str) -> list[Message]:
         result = await self.db.execute(
-            select(Message)
-            .where(Message.conversation_id == conversation_id)
-            .order_by(Message.created_at)
+            select(Message).where(Message.conversation_id == conversation_id).order_by(Message.created_at)
         )
         return list(result.scalars().all())
 

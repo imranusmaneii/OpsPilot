@@ -47,9 +47,7 @@ class RateLimitException(AppException):
 
 class InternalServerException(AppException):
     def __init__(self, detail: str = "Internal server error"):
-        super().__init__(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail
-        )
+        super().__init__(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
 
 
 async def app_exception_handler(request, exc: AppException):

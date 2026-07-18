@@ -126,13 +126,13 @@ class AnalyticsService:
 
     async def _count_docs(self, user_id: str) -> int:
         from app.domains.documents.models import Document
-        result = await self.db.execute(
-            select(func.count()).select_from(Document).where(Document.user_id == user_id)
-        )
+
+        result = await self.db.execute(select(func.count()).select_from(Document).where(Document.user_id == user_id))
         return result.scalar() or 0
 
     async def _count_messages(self, user_id: str) -> int:
         from app.domains.chat.models import Conversation, Message
+
         result = await self.db.execute(
             select(func.count())
             .select_from(Message)
@@ -143,33 +143,32 @@ class AnalyticsService:
 
     async def _count_evaluations(self, user_id: str) -> int:
         from app.domains.evaluation.models import Evaluation
+
         result = await self.db.execute(
             select(func.count()).select_from(Evaluation).where(Evaluation.user_id == user_id)
         )
         return result.scalar() or 0
 
     async def _sum_tokens(self, user_id: str) -> int:
-        result = await self.db.execute(
-            select(func.sum(UsageMetric.tokens_used)).where(UsageMetric.user_id == user_id)
-        )
+        result = await self.db.execute(select(func.sum(UsageMetric.tokens_used)).where(UsageMetric.user_id == user_id))
         return result.scalar() or 0
 
     async def _sum_cost(self, user_id: str) -> float:
-        result = await self.db.execute(
-            select(func.sum(UsageMetric.cost_usd)).where(UsageMetric.user_id == user_id)
-        )
+        result = await self.db.execute(select(func.sum(UsageMetric.cost_usd)).where(UsageMetric.user_id == user_id))
         return float(result.scalar() or 0)
 
     async def _avg_latency(self, user_id: str) -> float | None:
         result = await self.db.execute(
-            select(func.avg(UsageMetric.latency_ms))
-            .where(UsageMetric.user_id == user_id, UsageMetric.latency_ms.isnot(None))
+            select(func.avg(UsageMetric.latency_ms)).where(
+                UsageMetric.user_id == user_id, UsageMetric.latency_ms.isnot(None)
+            )
         )
         val = result.scalar()
         return float(val) if val else None
 
     async def _count_embeddings(self, user_id: str) -> int:
         from app.domains.documents.models import DocumentChunk, Document
+
         result = await self.db.execute(
             select(func.count())
             .select_from(DocumentChunk)

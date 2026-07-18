@@ -23,9 +23,7 @@ class CollectionService:
 
     async def list(self, user_id: str) -> list[Collection]:
         result = await self.db.execute(
-            select(Collection)
-            .where(Collection.user_id == user_id)
-            .order_by(Collection.created_at.desc())
+            select(Collection).where(Collection.user_id == user_id).order_by(Collection.created_at.desc())
         )
         return list(result.scalars().all())
 
@@ -41,9 +39,7 @@ class CollectionService:
             raise NotFoundException("Collection", collection_id)
         return collection
 
-    async def update(
-        self, user_id: str, collection_id: str, data: CollectionUpdate
-    ) -> Collection:
+    async def update(self, user_id: str, collection_id: str, data: CollectionUpdate) -> Collection:
         collection = await self.get(user_id, collection_id)
         if data.name is not None:
             collection.name = data.name

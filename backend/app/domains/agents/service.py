@@ -96,9 +96,7 @@ class AgentService:
 
         return WorkflowGraph(nodes=nodes, edges=edges)
 
-    async def get_agent_runs(
-        self, agent_name: str | None = None, limit: int = 50
-    ) -> list[AgentRunResponse]:
+    async def get_agent_runs(self, agent_name: str | None = None, limit: int = 50) -> list[AgentRunResponse]:
         query = select(AgentRun).order_by(AgentRun.created_at.desc()).limit(limit)
         if agent_name:
             query = query.where(AgentRun.agent_name == agent_name)
@@ -125,9 +123,7 @@ class AgentService:
         agents = []
         for a in AGENT_DEFINITIONS:
             result = await self.db.execute(
-                select(func.count())
-                .select_from(AgentRun)
-                .where(AgentRun.agent_name == a["key"])
+                select(func.count()).select_from(AgentRun).where(AgentRun.agent_name == a["key"])
             )
             total = result.scalar() or 0
 
@@ -138,10 +134,7 @@ class AgentService:
             )
             completed = result.scalar() or 0
 
-            result = await self.db.execute(
-                select(func.avg(AgentRun.latency_ms))
-                .where(AgentRun.agent_name == a["key"])
-            )
+            result = await self.db.execute(select(func.avg(AgentRun.latency_ms)).where(AgentRun.agent_name == a["key"]))
             avg_latency = result.scalar()
 
             result = await self.db.execute(
@@ -152,15 +145,17 @@ class AgentService:
             )
             last_run = result.scalar()
 
-            agents.append({
-                "name": a["name"],
-                "key": a["key"],
-                "description": a["description"],
-                "status": "active",
-                "total_runs": total,
-                "success_rate": round(completed / total * 100, 1) if total > 0 else 0,
-                "avg_latency_ms": round(avg_latency, 2) if avg_latency else None,
-                "last_run": last_run.isoformat() if last_run else None,
-            })
+            agents.append(
+                {
+                    "name": a["name"],
+                    "key": a["key"],
+                    "description": a["description"],
+                    "status": "active",
+                    "total_runs": total,
+                    "success_rate": round(completed / total * 100, 1) if total > 0 else 0,
+                    "avg_latency_ms": round(avg_latency, 2) if avg_latency else None,
+                    "last_run": last_run.isoformat() if last_run else None,
+                }
+            )
 
         return agents

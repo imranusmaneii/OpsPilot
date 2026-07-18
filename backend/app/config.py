@@ -10,9 +10,7 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=False)
     ENVIRONMENT: str = Field(default="development")
 
-    DATABASE_URL: str = Field(
-        default="postgresql+asyncpg://opspilot:opspilot@localhost:5432/opspilot"
-    )
+    DATABASE_URL: str = Field(default="postgresql+asyncpg://opspilot:opspilot@localhost:5432/opspilot")
     DATABASE_ECHO: bool = Field(default=False)
 
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
@@ -25,9 +23,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = Field(default="")
     OPENAI_MODEL: str = Field(default="gpt-4o")
 
-    CORS_ORIGINS: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:3001"]
-    )
+    CORS_ORIGINS: list[str] = Field(default=["http://localhost:3000", "http://localhost:3001"])
 
     MAX_UPLOAD_SIZE_MB: int = Field(default=50)
     RATE_LIMIT_PER_MINUTE: int = Field(default=60)

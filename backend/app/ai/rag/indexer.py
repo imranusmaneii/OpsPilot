@@ -16,9 +16,7 @@ class Indexer:
         self.chunker = DocumentChunker()
         self.embedder = Embedder()
 
-    async def index_document(
-        self, db: AsyncSession, document_id: str
-    ) -> dict:
+    async def index_document(self, db: AsyncSession, document_id: str) -> dict:
         doc_service = DocumentService(db)
 
         doc = await doc_service.get(
@@ -32,6 +30,7 @@ class Indexer:
 
         try:
             from pathlib import Path
+
             file_path = Path(doc.file_path)
             if not file_path.exists():
                 raise FileNotFoundError(f"File not found: {doc.file_path}")
@@ -50,9 +49,7 @@ class Indexer:
             texts = [c.content for c in chunks]
             embeddings = self.embedder.embed_batch(texts)
 
-            await db.execute(
-                delete(DocumentChunk).where(DocumentChunk.document_id == document_id)
-            )
+            await db.execute(delete(DocumentChunk).where(DocumentChunk.document_id == document_id))
 
             for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
                 db_chunk = DocumentChunk(
@@ -113,6 +110,7 @@ class Indexer:
     def _extract_pdf(self, file_path) -> str:
         try:
             import pymupdf
+
             doc = pymupdf.open(str(file_path))
             text_parts = []
             for page in doc:
@@ -122,6 +120,7 @@ class Indexer:
         except ImportError:
             try:
                 from PyPDF2 import PdfReader
+
                 reader = PdfReader(str(file_path))
                 text_parts = []
                 for page in reader.pages:
@@ -133,6 +132,7 @@ class Indexer:
     def _extract_docx(self, file_path) -> str:
         try:
             import docx
+
             doc = docx.Document(str(file_path))
             return "\n\n".join(p.text for p in doc.paragraphs if p.text.strip())
         except ImportError:
@@ -141,6 +141,7 @@ class Indexer:
     def _extract_csv(self, file_path) -> str:
         import csv
         import io
+
         content = file_path.read_text(encoding="utf-8")
         reader = csv.reader(io.StringIO(content))
         rows = list(reader)
@@ -154,6 +155,7 @@ class Indexer:
 
     def _extract_json(self, file_path) -> str:
         import json
+
         content = file_path.read_text(encoding="utf-8")
         data = json.loads(content)
         if isinstance(data, list):

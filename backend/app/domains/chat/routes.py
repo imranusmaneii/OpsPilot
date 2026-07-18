@@ -46,10 +46,7 @@ async def list_conversations(
 ):
     convs = await service.list_conversations(user_id)
     return {
-        "conversations": [
-            {"id": str(c.id), "title": c.title, "created_at": c.created_at.isoformat()}
-            for c in convs
-        ]
+        "conversations": [{"id": str(c.id), "title": c.title, "created_at": c.created_at.isoformat()} for c in convs]
     }
 
 
@@ -106,9 +103,7 @@ async def stream_chat(
     async def generate():
         start = time.perf_counter()
 
-        search_results = await search_service.search(
-            SearchRequest(query=message, top_k=5)
-        )
+        search_results = await search_service.search(SearchRequest(query=message, top_k=5))
 
         context_parts = []
         for r in search_results.results:

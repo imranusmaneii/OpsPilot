@@ -24,9 +24,7 @@ class AuthService:
         self.db = db
 
     async def register(self, data: UserRegister) -> User:
-        existing = await self.db.execute(
-            select(User).where(User.email == data.email)
-        )
+        existing = await self.db.execute(select(User).where(User.email == data.email))
         if existing.scalar_one_or_none():
             raise ConflictException(f"Email {data.email} already registered")
 

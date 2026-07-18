@@ -6,8 +6,12 @@ from app.infrastructure.database import get_async_session
 from app.dependencies import get_current_user_id
 from app.domains.integrations.service import IntegrationService
 from app.domains.integrations.schemas import (
-    IntegrationCreate, IntegrationUpdate, IntegrationResponse,
-    IntegrationListResponse, SyncResponse, AvailableProvider,
+    IntegrationCreate,
+    IntegrationUpdate,
+    IntegrationResponse,
+    IntegrationListResponse,
+    SyncResponse,
+    AvailableProvider,
 )
 
 router = APIRouter(prefix="/integrations", tags=["Integrations"])

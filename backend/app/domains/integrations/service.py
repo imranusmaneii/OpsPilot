@@ -4,8 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.integrations.models import Integration
 from app.domains.integrations.schemas import (
-    IntegrationCreate, IntegrationUpdate, IntegrationResponse,
-    IntegrationListResponse, SyncResponse,
+    IntegrationCreate,
+    IntegrationUpdate,
+    IntegrationResponse,
+    IntegrationListResponse,
+    SyncResponse,
 )
 from app.domains.integrations.connectors import get_connector, get_available_providers
 from app.core.logging_config import logger
@@ -44,7 +47,9 @@ class IntegrationService:
         integration = result.scalar_one_or_none()
         return IntegrationResponse.model_validate(integration) if integration else None
 
-    async def update_integration(self, integration_id: uuid.UUID, user_id: uuid.UUID, data: IntegrationUpdate) -> IntegrationResponse | None:
+    async def update_integration(
+        self, integration_id: uuid.UUID, user_id: uuid.UUID, data: IntegrationUpdate
+    ) -> IntegrationResponse | None:
         stmt = select(Integration).where(Integration.id == integration_id, Integration.user_id == user_id)
         result = await self.session.execute(stmt)
         integration = result.scalar_one_or_none()

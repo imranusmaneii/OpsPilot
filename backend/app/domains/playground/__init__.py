@@ -59,9 +59,29 @@ async def run_playground(
 async def get_templates(user_id: uuid.UUID = Depends(get_current_user_id)):
     return {
         "templates": [
-            {"id": "rag", "name": "RAG Q&A", "system": "Answer the question using the provided context. Be concise and cite sources.", "prompt": "Context: {context}\n\nQuestion: {question}"},
-            {"id": "summarize", "name": "Summarization", "system": "Summarize the following text in bullet points.", "prompt": "Text: {text}"},
-            {"id": "extract", "name": "Entity Extraction", "system": "Extract key entities (people, orgs, dates) as JSON.", "prompt": "Text: {text}"},
-            {"id": "classify", "name": "Classification", "system": "Classify the following text into one of: technical, business, legal, other.", "prompt": "Text: {text}"},
+            {
+                "id": "rag",
+                "name": "RAG Q&A",
+                "system": "Answer the question using the provided context. Be concise and cite sources.",
+                "prompt": "Context: {context}\n\nQuestion: {question}",
+            },
+            {
+                "id": "summarize",
+                "name": "Summarization",
+                "system": "Summarize the following text in bullet points.",
+                "prompt": "Text: {text}",
+            },
+            {
+                "id": "extract",
+                "name": "Entity Extraction",
+                "system": "Extract key entities (people, orgs, dates) as JSON.",
+                "prompt": "Text: {text}",
+            },
+            {
+                "id": "classify",
+                "name": "Classification",
+                "system": "Classify the following text into one of: technical, business, legal, other.",
+                "prompt": "Text: {text}",
+            },
         ]
     }

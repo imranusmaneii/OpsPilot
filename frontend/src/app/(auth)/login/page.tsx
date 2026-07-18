@@ -15,6 +15,7 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 1500));
+    localStorage.setItem("access_token", "demo-token");
     router.push("/dashboard");
   };
 

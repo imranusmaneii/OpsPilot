@@ -84,25 +84,17 @@ class DocumentService:
 
     async def get_chunks(self, document_id: str) -> list[DocumentChunk]:
         result = await self.db.execute(
-            select(DocumentChunk)
-            .where(DocumentChunk.document_id == document_id)
-            .order_by(DocumentChunk.chunk_index)
+            select(DocumentChunk).where(DocumentChunk.document_id == document_id).order_by(DocumentChunk.chunk_index)
         )
         return list(result.scalars().all())
 
-    async def update_status(
-        self, document_id: str, status: str, error_message: str | None = None
-    ):
+    async def update_status(self, document_id: str, status: str, error_message: str | None = None):
         await self.db.execute(
-            update(Document)
-            .where(Document.id == document_id)
-            .values(status=status, error_message=error_message)
+            update(Document).where(Document.id == document_id).values(status=status, error_message=error_message)
         )
         await self.db.flush()
 
-    async def update_index_info(
-        self, document_id: str, chunk_count: int, embedding_model: str
-    ):
+    async def update_index_info(self, document_id: str, chunk_count: int, embedding_model: str):
         await self.db.execute(
             update(Document)
             .where(Document.id == document_id)
@@ -123,7 +115,5 @@ class DocumentService:
         await self.db.flush()
 
     async def count(self, user_id: str) -> int:
-        result = await self.db.execute(
-            select(func.count()).select_from(Document).where(Document.user_id == user_id)
-        )
+        result = await self.db.execute(select(func.count()).select_from(Document).where(Document.user_id == user_id))
         return result.scalar() or 0

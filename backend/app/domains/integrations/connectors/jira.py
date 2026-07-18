@@ -18,6 +18,7 @@ class JiraConnector(BaseConnector):
     async def test_connection(self) -> bool:
         try:
             import base64
+
             email = self.config.get("email", "")
             token = self.credentials or ""
             auth = base64.b64encode(f"{email}:{token}".encode()).decode()
@@ -38,6 +39,7 @@ class JiraConnector(BaseConnector):
         items = 0
         try:
             import base64
+
             email = self.config.get("email", "")
             token = self.credentials or ""
             auth = base64.b64encode(f"{email}:{token}".encode()).decode()

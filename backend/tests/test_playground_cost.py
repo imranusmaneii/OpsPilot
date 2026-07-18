@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 class TestPlaygroundSchemas:
     def test_playground_request(self):
         from app.domains.playground import PlaygroundRequest
+
         req = PlaygroundRequest(prompt="Hello", system_prompt="Be helpful", model="gpt-4o")
         assert req.prompt == "Hello"
         assert req.model == "gpt-4o"
@@ -12,6 +13,7 @@ class TestPlaygroundSchemas:
 
     def test_playground_request_defaults(self):
         from app.domains.playground import PlaygroundRequest
+
         req = PlaygroundRequest(prompt="Test")
         assert req.system_prompt == ""
         assert req.model == "gpt-4o-mini"
@@ -21,12 +23,14 @@ class TestPlaygroundSchemas:
 class TestCostSchemas:
     def test_cost_estimate_request(self):
         from app.domains.cost import CostEstimateRequest
+
         req = CostEstimateRequest(model="gpt-4o", input_tokens=1000, output_tokens=500)
         assert req.model == "gpt-4o"
         assert req.input_tokens == 1000
 
     def test_model_pricing_response(self):
         from app.domains.cost import ModelPricingResponse
+
         resp = ModelPricingResponse(model="gpt-4o", input_per_million=2.50, output_per_million=10.00)
         assert resp.input_per_million == 2.50
 

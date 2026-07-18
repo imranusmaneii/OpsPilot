@@ -32,9 +32,7 @@ class EvaluationService:
 
     async def list(self, user_id: str) -> list[Evaluation]:
         result = await self.db.execute(
-            select(Evaluation)
-            .where(Evaluation.user_id == user_id)
-            .order_by(Evaluation.created_at.desc())
+            select(Evaluation).where(Evaluation.user_id == user_id).order_by(Evaluation.created_at.desc())
         )
         return list(result.scalars().all())
 
@@ -48,6 +46,7 @@ class EvaluationService:
         ev = result.scalar_one_or_none()
         if not ev:
             from app.core.exceptions import NotFoundException
+
             raise NotFoundException("Evaluation", evaluation_id)
         return ev
 
@@ -112,7 +111,9 @@ class EvaluationService:
                 "faithfulness": round(sum(all_faithfulness) / len(all_faithfulness), 4) if all_faithfulness else 0,
                 "answer_relevancy": round(sum(all_relevancy) / len(all_relevancy), 4) if all_relevancy else 0,
                 "context_precision": round(sum(all_precision) / len(all_precision), 4) if all_precision else 0,
-                "hallucination_rate": round(sum(all_hallucination) / len(all_hallucination), 4) if all_hallucination else 0,
+                "hallucination_rate": round(sum(all_hallucination) / len(all_hallucination), 4)
+                if all_hallucination
+                else 0,
                 "total_samples": len(dataset),
             }
             eval_obj.completed_at = datetime.now(timezone.utc)

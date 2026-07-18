@@ -13,9 +13,7 @@ class VectorStore:
         await session.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await session.commit()
 
-    async def create_index(
-        self, session: AsyncSession, table: str = "document_chunks", lists: int = 100
-    ):
+    async def create_index(self, session: AsyncSession, table: str = "document_chunks", lists: int = 100):
         try:
             await session.execute(
                 text(
@@ -28,9 +26,7 @@ class VectorStore:
         except Exception as e:
             logger.warning("index_creation_failed", table=table, error=str(e))
 
-    async def upsert_embedding(
-        self, session: AsyncSession, chunk_id: str, embedding: list[float]
-    ):
+    async def upsert_embedding(self, session: AsyncSession, chunk_id: str, embedding: list[float]):
         vec = np.array(embedding, dtype=np.float32)
         await session.execute(
             text("UPDATE document_chunks SET embedding = :embedding WHERE id = :id"),
@@ -69,9 +65,7 @@ class VectorStore:
                 ORDER BY embedding <=> :embedding
                 LIMIT :top_k
             """)
-            result = await session.execute(
-                query, {"embedding": vec.tolist(), "top_k": top_k}
-            )
+            result = await session.execute(query, {"embedding": vec.tolist(), "top_k": top_k})
 
         rows = result.mappings().all()
         return [dict(row) for row in rows]

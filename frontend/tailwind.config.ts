@@ -11,6 +11,7 @@ const config: Config = {
     extend: {
       colors: {
         background: "#070B14",
+        foreground: "#FFFFFF",
         secondary: "#0F172A",
         card: "rgba(255,255,255,0.05)",
         accent: {

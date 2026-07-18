@@ -52,8 +52,8 @@ jobs:
       - name: Lint with ruff
         run: ruff check . --output-format=github
 
-      - name: Format check with black
-        run: black --check .
+      - name: Format check
+        run: ruff format --check .
 
       - name: Type check with mypy
         run: mypy app/ --ignore-missing-imports

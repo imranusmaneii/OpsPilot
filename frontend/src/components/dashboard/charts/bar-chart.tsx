@@ -12,11 +12,12 @@ interface BarChartData {
 interface BarChartProps {
   data: BarChartData[];
   height?: number;
+  color?: string;
   showLabels?: boolean;
   showValues?: boolean;
 }
 
-export function BarChart({ data, height = 200, showLabels = true, showValues = true }: BarChartProps) {
+export function BarChart({ data, height = 200, color: defaultColor, showLabels = true, showValues = true }: BarChartProps) {
   const maxValue = useMemo(() => Math.max(...data.map((d) => d.value), 1), [data]);
 
   return (
@@ -24,7 +25,7 @@ export function BarChart({ data, height = 200, showLabels = true, showValues = t
       <div className="flex items-end gap-2" style={{ height }}>
         {data.map((item, i) => {
           const barHeight = (item.value / maxValue) * 100;
-          const color = item.color || "#7C3AED";
+          const color = item.color || defaultColor || "#7C3AED";
 
           return (
             <div key={i} className="flex flex-1 flex-col items-center gap-1">

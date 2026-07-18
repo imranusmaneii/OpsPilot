@@ -4,13 +4,13 @@ import { Bell, Search, Command } from "lucide-react";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 
 export function Navbar() {
-  const { open } = useCommandPalette();
+  const { openPalette } = useCommandPalette();
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-[rgba(255,255,255,0.08)] bg-[#0F172A]/30 px-6 backdrop-blur-xl">
       <div className="flex items-center gap-4">
         <button
-          onClick={open}
+          onClick={openPalette}
           className="flex items-center gap-2 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-4 py-2 text-sm text-[#94A3B8] transition-all hover:border-[#7C3AED]/30 hover:bg-[rgba(255,255,255,0.08)]"
         >
           <Search className="h-4 w-4" />

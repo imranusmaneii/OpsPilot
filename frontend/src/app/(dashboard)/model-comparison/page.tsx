@@ -38,7 +38,11 @@ export default function ModelComparisonPage() {
     setResults({});
     try {
       const promises = selectedModels.map(async (modelId) => {
-        const res = await apiClient.post("/playground/run", {
+        const res = await apiClient.post<{
+          output: string;
+          latency_ms: number;
+          usage: { total_tokens: number };
+        }>("/playground/run", {
           prompt: testPrompt,
           model: modelId,
           temperature: 0.7,
@@ -49,6 +53,7 @@ export default function ModelComparisonPage() {
       const all = await Promise.all(promises);
       const newResults: typeof results = {};
       all.forEach(({ modelId, data }) => {
+        if (!data) return;
         newResults[modelId] = {
           output: data.output,
           latency: data.latency_ms,

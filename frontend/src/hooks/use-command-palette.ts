@@ -9,5 +9,5 @@ export function useCommandPalette() {
   const closePalette = useCallback(() => setOpen(false), []);
   const togglePalette = useCallback(() => setOpen((o) => !o), []);
 
-  return { open, open: openPalette, close: closePalette, toggle: togglePalette };
+  return { open, openPalette, close: closePalette, toggle: togglePalette };
 }

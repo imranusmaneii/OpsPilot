@@ -34,14 +34,18 @@ export default function PlaygroundPage() {
     setLoading(true);
     setOutput("");
     try {
-      const res = await apiClient.post("/playground/run", {
+      const res = await apiClient.post<{
+        output: string;
+        latency_ms: number;
+        usage: { total_tokens: number };
+      }>("/playground/run", {
         prompt: userPrompt,
         system_prompt: systemPrompt,
         model,
         temperature,
         max_tokens: maxTokens,
       });
-      const data = res.data;
+      const data = res.data!;
       setOutput(data.output);
       setStats({ latency: data.latency_ms, tokens: data.usage.total_tokens, cost: ((data.usage.total_tokens / 1000) * 0.00015).toFixed(4) });
       setHistory((prev) => [{ prompt: userPrompt.slice(0, 80), output: data.output.slice(0, 100), model, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 10));

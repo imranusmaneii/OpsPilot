@@ -62,11 +62,11 @@ export default function IntegrationsPage() {
   const fetchData = useCallback(async () => {
     try {
       const [provRes, intRes] = await Promise.all([
-        apiClient.get("/integrations/providers"),
-        apiClient.get("/integrations"),
+        apiClient.get<Provider[]>("/integrations/providers"),
+        apiClient.get<{ integrations: Integration[]; total: number }>("/integrations"),
       ]);
-      setProviders(provRes.data);
-      setIntegrations(intRes.data.integrations || []);
+      if (provRes.data) setProviders(provRes.data);
+      if (intRes.data) setIntegrations(intRes.data.integrations || []);
     } catch {
       setProviders([
         { id: "github", name: "GitHub", description: "Sync repositories, issues, PRs", icon: "github", fields: [{ name: "token", type: "password", label: "PAT Token", required: true }] },

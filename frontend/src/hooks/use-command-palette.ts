@@ -2,12 +2,18 @@
 
 import { useState, useCallback } from "react";
 
+type CommandPaletteState = {
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  openPalette: () => void;
+};
+
+let state: CommandPaletteState = { open: false, setOpen: () => {}, openPalette: () => {} };
+
 export function useCommandPalette() {
-  const [open, setOpen] = useState(false);
+  return state;
+}
 
-  const openPalette = useCallback(() => setOpen(true), []);
-  const closePalette = useCallback(() => setOpen(false), []);
-  const togglePalette = useCallback(() => setOpen((o) => !o), []);
-
-  return { open, openPalette, close: closePalette, toggle: togglePalette };
+export function _setCommandPaletteState(s: CommandPaletteState) {
+  state = s;
 }

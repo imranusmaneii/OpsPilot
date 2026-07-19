@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   User,
   Key,
@@ -37,7 +37,44 @@ const THEMES: { label: string; value: Theme; icon: typeof Moon; bg: string }[] =
   { label: "OLED", value: "oled", icon: Sun, bg: "bg-black" },
 ];
 
+function applyTheme(theme: Theme, accent: string) {
+  const root = document.documentElement;
+  root.classList.remove("dark", "midnight", "oled");
+  root.classList.add(theme);
+  root.style.setProperty("--accent-purple", accent);
+
+  if (theme === "oled") {
+    root.style.setProperty("--background", "#000000");
+    root.style.setProperty("--secondary", "#0A0A0A");
+  } else if (theme === "midnight") {
+    root.style.setProperty("--background", "#0B1120");
+    root.style.setProperty("--secondary", "#111827");
+  } else {
+    root.style.setProperty("--background", "#050810");
+    root.style.setProperty("--secondary", "#0A0F1E");
+  }
+}
+
+function loadSettings(): { theme: Theme; accent: string } {
+  if (typeof window === "undefined") return { theme: "dark", accent: "#7C3AED" };
+  try {
+    const saved = localStorage.getItem("opspilot-settings");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return { theme: parsed.theme || "dark", accent: parsed.accent || "#7C3AED" };
+    }
+  } catch {}
+  return { theme: "dark", accent: "#7C3AED" };
+}
+
+function saveSettings(theme: Theme, accent: string) {
+  try {
+    localStorage.setItem("opspilot-settings", JSON.stringify({ theme, accent }));
+  } catch {}
+}
+
 export default function SettingsPage() {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const [showApiKey, setShowApiKey] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -55,26 +92,17 @@ export default function SettingsPage() {
     securityAlerts: true,
   });
 
+  useEffect(() => {
+    const settings = loadSettings();
+    setCurrentTheme(settings.theme);
+    setCurrentAccent(settings.accent);
+    applyTheme(settings.theme, settings.accent);
+    setMounted(true);
+  }, []);
+
   const handleSave = () => {
-    // Apply accent color as CSS variable
-    document.documentElement.style.setProperty("--accent-purple", currentAccent);
-
-    // Apply theme
-    const root = document.documentElement;
-    root.classList.remove("dark", "midnight", "oled");
-    root.classList.add(currentTheme);
-
-    if (currentTheme === "oled") {
-      root.style.setProperty("--background", "#000000");
-      root.style.setProperty("--secondary", "#0A0A0A");
-    } else if (currentTheme === "midnight") {
-      root.style.setProperty("--background", "#0B1120");
-      root.style.setProperty("--secondary", "#111827");
-    } else {
-      root.style.setProperty("--background", "#050810");
-      root.style.setProperty("--secondary", "#0A0F1E");
-    }
-
+    applyTheme(currentTheme, currentAccent);
+    saveSettings(currentTheme, currentAccent);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };

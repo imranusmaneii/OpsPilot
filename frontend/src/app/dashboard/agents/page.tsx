@@ -68,9 +68,39 @@ export default function AgentsPage() {
   const [activeTab, setActiveTab] = useState<"graph" | "runs" | "list">("graph");
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [expandedRun, setExpandedRun] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+  const [activeNode, setActiveNode] = useState<string | null>(null);
+  const [runLogs, setRunLogs] = useState<{ agent: string; status: string; time: string }[]>([]);
 
   const totalRuns = AGENTS.reduce((sum, a) => sum + a.total_runs, 0);
   const avgSuccess = AGENTS.reduce((sum, a) => sum + a.success_rate, 0) / AGENTS.length;
+
+  const handleRunPipeline = async () => {
+    if (running) return;
+    setRunning(true);
+    setRunLogs([]);
+    setActiveTab("graph");
+
+    const agentOrder = ["planner", "retriever", "document_qa", "reasoning", "citation", "evaluator"];
+    const agentNames = ["Planner", "Retriever", "Document QA", "Reasoning", "Citation", "Evaluator"];
+
+    for (let i = 0; i < agentOrder.length; i++) {
+      setActiveNode(agentOrder[i]);
+      setRunLogs((prev) => [...prev, { agent: agentNames[i], status: "running", time: "" }]);
+      await new Promise((r) => setTimeout(r, 600 + Math.random() * 400));
+
+      setRunLogs((prev) =>
+        prev.map((log, idx) =>
+          idx === i
+            ? { ...log, status: "completed", time: `${Math.floor(Math.random() * 400 + 100)}ms` }
+            : log
+        )
+      );
+    }
+
+    setActiveNode(null);
+    setRunning(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -79,9 +109,13 @@ export default function AgentsPage() {
           <h1 className="text-2xl font-bold">Agents</h1>
           <p className="text-sm text-[#94A3B8]">Monitor and configure your multi-agent AI pipeline</p>
         </div>
-        <button className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#7C3AED]/90">
-          <Play className="h-4 w-4" />
-          Run Pipeline
+        <button
+          onClick={handleRunPipeline}
+          disabled={running}
+          className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#7C3AED]/90 disabled:opacity-60"
+        >
+          {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+          {running ? "Running..." : "Run Pipeline"}
         </button>
       </div>
 
@@ -165,13 +199,28 @@ export default function AgentsPage() {
                   {WORKFLOW_EDGES.map((edge, i) => {
                     const from = WORKFLOW_NODES.find((n) => n.id === edge.from)!;
                     const to = WORKFLOW_NODES.find((n) => n.id === edge.to)!;
+                    const fromDone = runLogs.some((l) => l.status === "completed" && l.agent.toLowerCase().replace(" ", "_") === edge.from);
+                    const toRunning = activeNode === edge.to;
+                    const edgeActive = fromDone && (toRunning || runLogs.some((l) => l.status === "completed" && l.agent.toLowerCase().replace(" ", "_") === edge.to));
                     return (
                       <g key={i}>
                         <line
                           x1={from.x} y1={from.y + 45}
                           x2={to.x} y2={to.y}
-                          stroke="url(#edgeGrad)" strokeWidth="2" markerEnd="url(#arrow)"
+                          stroke={edgeActive ? "#7C3AED" : "url(#edgeGrad)"}
+                          strokeWidth={edgeActive ? 2.5 : 2}
+                          strokeOpacity={edgeActive ? 0.8 : 1}
+                          markerEnd="url(#arrow)"
                         />
+                        {edgeActive && (
+                          <circle r="3" fill="#7C3AED">
+                            <animateMotion
+                              dur="0.8s"
+                              repeatCount="indefinite"
+                              path={`M${from.x},${from.y + 45} L${to.x},${to.y}`}
+                            />
+                          </circle>
+                        )}
                         <text x={(from.x + to.x) / 2 + 12} y={(from.y + 45 + to.y) / 2} fill="#475569" fontSize="9" fontFamily="Inter">
                           {edge.label}
                         </text>
@@ -182,26 +231,49 @@ export default function AgentsPage() {
                   {WORKFLOW_NODES.map((node) => {
                     const agent = AGENTS.find((a) => a.name.toLowerCase().replace(" ", "_") === node.id);
                     const isSelected = selectedAgent === node.id;
+                    const isRunning = activeNode === node.id;
+                    const isDone = runLogs.some((l) => l.status === "completed" && l.agent.toLowerCase().replace(" ", "_") === node.id);
                     return (
                       <g
                         key={node.id}
                         onClick={() => setSelectedAgent(isSelected ? null : node.id)}
                         className="cursor-pointer"
                       >
+                        {isRunning && (
+                          <rect
+                            x={node.x - 95} y={node.y - 5}
+                            width={190} height={55}
+                            rx={14}
+                            fill="none"
+                            stroke={node.color}
+                            strokeWidth="2"
+                            strokeOpacity="0.6"
+                          >
+                            <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="1s" repeatCount="indefinite" />
+                          </rect>
+                        )}
                         <rect
                           x={node.x - 90} y={node.y}
                           width={180} height={45}
                           rx={12}
-                          fill={node.color + "15"}
-                          stroke={node.color + (isSelected ? "80" : "40")}
-                          strokeWidth={isSelected ? 2 : 1}
+                          fill={isDone ? node.color + "25" : node.color + "15"}
+                          stroke={isRunning ? node.color : isSelected ? node.color + "80" : node.color + "40"}
+                          strokeWidth={isRunning ? 2 : isSelected ? 2 : 1}
                         />
-                        <circle cx={node.x - 70} cy={node.y + 14} r={4} fill={agent?.status === "active" ? "#10B981" : "#94A3B8"} />
+                        <circle cx={node.x - 70} cy={node.y + 14} r={4} fill={
+                          isRunning ? "#F59E0B" : isDone ? "#10B981" : agent?.status === "active" ? "#10B981" : "#94A3B8"
+                        } />
+                        {isRunning && (
+                          <circle cx={node.x - 70} cy={node.y + 14} r={4} fill="#F59E0B">
+                            <animate attributeName="r" values="4;6;4" dur="0.8s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="1;0.4;1" dur="0.8s" repeatCount="indefinite" />
+                          </circle>
+                        )}
                         <text x={node.x - 58} y={node.y + 18} fill="white" fontSize="11" fontWeight="600" fontFamily="Inter">
                           {node.name}
                         </text>
                         <text x={node.x - 70} y={node.y + 35} fill="#475569" fontSize="9" fontFamily="Inter">
-                          {node.tools} tools · {agent?.total_runs || 0} runs
+                          {node.tools} tools · {isRunning ? "running..." : isDone ? "done" : `${agent?.total_runs || 0} runs`}
                         </text>
                       </g>
                     );
@@ -212,6 +284,54 @@ export default function AgentsPage() {
           </div>
 
           <div className="space-y-4">
+            {/* Run Logs - shown during/after pipeline run */}
+            {runLogs.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-5 backdrop-blur-xl"
+              >
+                <div className="mb-3 flex items-center gap-3">
+                  <div className="rounded-xl bg-[#7C3AED]/10 p-2.5">
+                    {running ? (
+                      <Loader2 className="h-5 w-5 text-[#7C3AED] animate-spin" />
+                    ) : (
+                      <CheckCircle className="h-5 w-5 text-emerald-400" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">
+                      {running ? "Pipeline Running..." : "Pipeline Complete"}
+                    </h3>
+                    <p className="text-xs text-[#94A3B8]">
+                      {runLogs.filter((l) => l.status === "completed").length}/{runLogs.length} agents executed
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {runLogs.map((log, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        {log.status === "running" ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-[#F59E0B]" />
+                        ) : (
+                          <CheckCircle className="h-3 w-3 text-emerald-400" />
+                        )}
+                        <span className="text-sm text-white">{log.agent}</span>
+                      </div>
+                      <span className="text-[10px] text-[#475569]">
+                        {log.status === "running" ? "running..." : log.time}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             {selectedAgent ? (
               (() => {
                 const agent = AGENTS.find((a) => a.name.toLowerCase().replace(" ", "_") === selectedAgent);

@@ -13,8 +13,6 @@ import {
   Plug,
   Settings,
   Sparkles,
-  ChevronLeft,
-  ChevronRight,
   FlaskConical,
   Layers,
   DollarSign,
@@ -39,13 +37,11 @@ const navItems = [
 ];
 
 interface SidebarProps {
-  collapsed: boolean;
-  onToggle: () => void;
   mobileOpen?: boolean;
   onMobileClose?: () => void;
 }
 
-export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
+export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
 
   const sidebarContent = (
@@ -54,16 +50,10 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED] to-[#2563EB] shadow-lg shadow-[#7C3AED]/20">
           <Sparkles className="h-5 w-5 text-white" />
         </div>
-        {!collapsed && (
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col"
-          >
-            <span className="text-sm font-bold tracking-tight text-white">OpsPilot</span>
-            <span className="text-[10px] font-medium tracking-widest uppercase text-[#7C3AED]">AI Platform</span>
-          </motion.div>
-        )}
+        <div className="flex flex-col">
+          <span className="text-sm font-bold tracking-tight text-white">OpsPilot</span>
+          <span className="text-[10px] font-medium tracking-widest uppercase text-[#7C3AED]">AI Platform</span>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-0.5 px-3 py-3 overflow-y-auto scrollbar-thin">
@@ -89,16 +79,14 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
                   isActive ? "text-[#A78BFA]" : "text-[#475569] group-hover:text-[#94A3B8]"
                 }`}
               />
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="whitespace-nowrap"
-                >
-                  {item.label}
-                </motion.span>
-              )}
-              {isActive && !collapsed && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="whitespace-nowrap"
+              >
+                {item.label}
+              </motion.span>
+              {isActive && (
                 <motion.div
                   layoutId="activeIndicator"
                   className="ml-auto h-1.5 w-1.5 rounded-full bg-[#7C3AED]"
@@ -109,38 +97,17 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         })}
       </nav>
 
-      <div className="border-t border-white/[0.06] p-3">
-        <button
-          onClick={onToggle}
-          className="hidden lg:flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-[#475569] transition-colors hover:bg-white/[0.04] hover:text-[#94A3B8]"
-        >
-          {collapsed ? (
-            <>
-              <ChevronRight className="h-4 w-4" />
-            </>
-          ) : (
-            <>
-              <ChevronLeft className="h-4 w-4" />
-              <span>Collapse</span>
-            </>
-          )}
-        </button>
+      <div className="border-t border-white/[0.06] p-4">
+        <div className="rounded-xl bg-[#7C3AED]/10 p-3">
+          <p className="text-xs font-medium text-[#A78BFA]">OpsPilot AI v0.1.0</p>
+          <p className="mt-0.5 text-[10px] text-[#475569]">Enterprise AI Operations</p>
+        </div>
       </div>
     </>
   );
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ width: collapsed ? 72 : 260 }}
-        transition={{ duration: 0.2, ease: "easeInOut" }}
-        className="hidden lg:flex h-screen flex-col border-r border-white/[0.06] bg-[#0A0F1E]/90 backdrop-blur-2xl"
-      >
-        {sidebarContent}
-      </motion.aside>
-
       {/* Mobile sidebar overlay */}
       <AnimatePresence>
         {mobileOpen && (
@@ -150,16 +117,16 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={onMobileClose}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
             />
             <motion.aside
               initial={{ x: -280 }}
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ duration: 0.2, ease: "easeInOut" }}
-              className="fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-white/[0.06] bg-[#0A0F1E]/95 backdrop-blur-2xl lg:hidden"
+              className="fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-white/[0.06] bg-[#0A0F1E]/95 backdrop-blur-2xl"
             >
-              <div className="absolute right-3 top-4">
+              <div className="absolute right-3 top-4 z-10">
                 <button
                   onClick={onMobileClose}
                   className="rounded-lg p-1.5 text-[#475569] hover:bg-white/[0.06] hover:text-white"

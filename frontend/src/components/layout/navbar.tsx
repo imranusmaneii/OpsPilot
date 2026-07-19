@@ -15,7 +15,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="rounded-xl p-2 text-[#475569] transition-colors hover:bg-white/[0.06] hover:text-white lg:hidden"
+          className="rounded-xl p-2 text-[#475569] transition-colors hover:bg-white/[0.06] hover:text-white"
         >
           <Menu className="h-5 w-5" />
         </button>

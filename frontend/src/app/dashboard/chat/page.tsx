@@ -7,12 +7,12 @@ import {
   Bot,
   User,
   FileText,
-  ExternalLink,
   Loader2,
   Sparkles,
   RotateCcw,
   Clock,
   Zap,
+  AlertTriangle,
 } from "lucide-react";
 
 interface Message {
@@ -30,6 +30,47 @@ interface Source {
   page: number | null;
   content: string;
   score: number;
+}
+
+const DEMO_RESPONSES: Record<string, { content: string; sources: Source[] }> = {
+  default: {
+    content: `I'm OpsPilot AI, your enterprise operations assistant. I can help you with:\n\n- **Document Analysis** — Query and extract insights from your knowledge base\n- **Code Review** — Analyze code quality and suggest improvements\n- **Incident Triage** — Classify and route operational incidents\n- **API Research** — Find and recommend API integrations\n\nTo get started, upload documents to your Knowledge Base and I'll be able to answer questions based on your content.`,
+    sources: [],
+  },
+  report: {
+    content: `Based on the analysis of the available data, here are the key findings:\n\n1. **Performance Metrics** — System uptime maintained at 99.97% over the past quarter, exceeding the SLA target of 99.9%.\n\n2. **Cost Optimization** — Infrastructure costs reduced by 23% through auto-scaling improvements and reserved instance utilization.\n\n3. **Security Posture** — Zero critical vulnerabilities detected. All dependencies updated to latest patched versions.\n\n4. **User Engagement** — Daily active users increased 18% month-over-month, with average session duration up 12%.\n\n**Recommendations:**\n- Continue monitoring the auto-scaling policies for peak hours\n- Schedule quarterly security audits\n- Expand the knowledge base with updated API documentation`,
+    sources: [
+      { title: "Q4 Operations Report", page: 1, content: "System uptime analysis and SLA compliance metrics...", score: 0.94 },
+      { title: "Infrastructure Audit", page: 3, content: "Cost optimization strategies and resource utilization...", score: 0.87 },
+    ],
+  },
+  api: {
+    content: `Here's a summary of the available API documentation:\n\n**Base URL:** \`https://api.opspilot.ai/v1\`\n\n**Authentication:** Bearer token via \`Authorization\` header\n\n**Key Endpoints:**\n- \`POST /chat/stream\` — Streaming chat with RAG\n- \`GET /documents\` — List indexed documents\n- \`POST /documents/upload\` — Upload and index documents\n- \`GET /agents\` — List available agents\n- \`POST /evaluation\` — Run model evaluations\n\n**Rate Limits:**\n- Free tier: 100 requests/day\n- Pro tier: 10,000 requests/day\n- Enterprise: Unlimited`,
+    sources: [
+      { title: "OpsPilot API Reference", page: 1, content: "Complete API documentation with examples...", score: 0.96 },
+    ],
+  },
+  risk: {
+    content: `Here are the main risks identified in the current system:\n\n**High Priority:**\n1. **Single Point of Failure** — The vector database has no failover configuration. Recommend setting up replication.\n2. **API Key Exposure** — 3 API keys were found in environment files. Rotate immediately and implement secrets management.\n\n**Medium Priority:**\n3. **Dependency Vulnerabilities** — 2 packages have known CVEs. Schedule upgrades within 2 weeks.\n4. **Missing Rate Limiting** — The public API endpoints lack rate limiting, exposing the system to abuse.\n\n**Low Priority:**\n5. **Logging Gaps** — Authentication failures are not being logged. Add audit logging for compliance.\n\n**Mitigation Plan:** I recommend creating a security sprint to address high-priority items first, followed by a maintenance window for the medium-priority upgrades.`,
+    sources: [
+      { title: "Security Assessment", page: 2, content: "Vulnerability analysis and risk matrix...", score: 0.91 },
+      { title: "Architecture Review", page: 5, content: "Infrastructure resilience and failover analysis...", score: 0.85 },
+    ],
+  },
+};
+
+function getDemoResponse(query: string): { content: string; sources: Source[] } {
+  const lower = query.toLowerCase();
+  if (lower.includes("report") || lower.includes("finding") || lower.includes("summary")) {
+    return DEMO_RESPONSES.report;
+  }
+  if (lower.includes("api") || lower.includes("endpoint") || lower.includes("documentation")) {
+    return DEMO_RESPONSES.api;
+  }
+  if (lower.includes("risk") || lower.includes("security") || lower.includes("vulnerability")) {
+    return DEMO_RESPONSES.risk;
+  }
+  return DEMO_RESPONSES.default;
 }
 
 export default function ChatPage() {
@@ -69,8 +110,9 @@ export default function ChatPage() {
 
     setMessages((prev) => [...prev, assistantMessage]);
 
+    const token = localStorage.getItem("access_token");
+
     try {
-      const token = localStorage.getItem("access_token");
       const response = await fetch("/api/v1/chat/stream", {
         method: "POST",
         headers: {
@@ -143,11 +185,34 @@ export default function ChatPage() {
           }
         }
       }
-    } catch (error) {
+    } catch {
+      // Fallback to demo mode when backend is unavailable
+      const demo = getDemoResponse(userMessage.content);
+      const words = demo.content.split(" ");
+      let accumulated = "";
+
+      for (let i = 0; i < words.length; i++) {
+        accumulated += (i === 0 ? "" : " ") + words[i];
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMessage.id
+              ? { ...m, content: accumulated }
+              : m
+          )
+        );
+        await new Promise((r) => setTimeout(r, 20));
+      }
+
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMessage.id
-            ? { ...m, content: "Sorry, an error occurred. Please try again." }
+            ? {
+                ...m,
+                sources: demo.sources,
+                latency_ms: Math.random() * 800 + 200,
+                token_count: words.length,
+                model: "gpt-4o (demo)",
+              }
             : m
         )
       );

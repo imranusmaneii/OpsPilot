@@ -1,311 +1,396 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plug, Github, MessageSquare, FileText, Layout, Folder,
-  CheckCircle, XCircle, RefreshCw, Settings, Plus, Trash2,
-  Zap, Search, ChevronRight, ExternalLink, ArrowLeftRight,
+  Plug,
+  Github,
+  MessageSquare,
+  FileText,
+  Layout,
+  Folder,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  Settings,
+  Plus,
+  Trash2,
+  Zap,
+  ExternalLink,
+  Database,
+  Mail,
+  Globe,
+  Webhook,
 } from "lucide-react";
-import { apiClient } from "@/lib/api-client";
-
-interface Provider {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  fields: { name: string; type: string; label: string; required: boolean }[];
-}
 
 interface Integration {
   id: string;
   provider: string;
   name: string;
-  config: Record<string, unknown>;
-  status: string;
-  created_at: string;
+  description: string;
+  icon: string;
+  status: "active" | "inactive" | "error";
+  lastSync: string | null;
+  syncCount: number;
+  config: Record<string, string>;
 }
 
-const ICONS: Record<string, React.ReactNode> = {
+const PROVIDERS = [
+  {
+    id: "github",
+    name: "GitHub",
+    description: "Sync repositories, issues, and pull requests for code context",
+    icon: "github",
+    category: "Development",
+    color: "bg-white/10 text-white",
+  },
+  {
+    id: "slack",
+    name: "Slack",
+    description: "Index channel messages and threads for knowledge retrieval",
+    icon: "slack",
+    category: "Communication",
+    color: "bg-[#4A154B]/30 text-[#E01E5A]",
+  },
+  {
+    id: "notion",
+    name: "Notion",
+    description: "Import pages, databases, and wikis into your knowledge base",
+    icon: "notion",
+    category: "Productivity",
+    color: "bg-white/10 text-white",
+  },
+  {
+    id: "jira",
+    name: "Jira",
+    description: "Track issues, sprint data, and project context",
+    icon: "jira",
+    category: "Project Management",
+    color: "bg-[#0052CC]/30 text-[#2684FF]",
+  },
+  {
+    id: "google_drive",
+    name: "Google Drive",
+    description: "Sync documents, spreadsheets, and presentations",
+    icon: "google_drive",
+    category: "Storage",
+    color: "bg-[#0F9D58]/30 text-[#34A853]",
+  },
+  {
+    id: "confluence",
+    name: "Confluence",
+    description: "Import team knowledge base articles and documentation",
+    icon: "confluence",
+    category: "Documentation",
+    color: "bg-[#0052CC]/30 text-[#172B4D]",
+  },
+  {
+    id: "linear",
+    name: "Linear",
+    description: "Sync issues, projects, and engineering workflows",
+    icon: "linear",
+    category: "Project Management",
+    color: "bg-[#5E6AD2]/30 text-[#5E6AD2]",
+  },
+  {
+    id: "webhook",
+    name: "Webhooks",
+    description: "Custom integrations via HTTP webhooks and event triggers",
+    icon: "webhook",
+    category: "Developer",
+    color: "bg-[#7C3AED]/30 text-[#A78BFA]",
+  },
+];
+
+const ICON_MAP: Record<string, React.ReactNode> = {
   github: <Github className="h-6 w-6" />,
   slack: <MessageSquare className="h-6 w-6" />,
   notion: <FileText className="h-6 w-6" />,
   jira: <Layout className="h-6 w-6" />,
   google_drive: <Folder className="h-6 w-6" />,
+  confluence: <Globe className="h-6 w-6" />,
+  linear: <Zap className="h-6 w-6" />,
+  webhook: <Webhook className="h-6 w-6" />,
 };
 
-const ICON_COLORS: Record<string, string> = {
-  github: "bg-white/10 text-white",
-  slack: "bg-[#4A154B]/30 text-[#E01E5A]",
-  notion: "bg-white/10 text-white",
-  jira: "bg-[#0052CC]/30 text-[#2684FF]",
-  google_drive: "bg-[#0F9D58]/30 text-[#34A853]",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  active: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-  inactive: "bg-slate-500/15 text-slate-400 border-slate-500/20",
-  error: "bg-red-500/15 text-red-400 border-red-500/20",
-};
+const INITIAL_INTEGRATIONS: Integration[] = [
+  {
+    id: "1",
+    provider: "github",
+    name: "GitHub — OpsPilot Repos",
+    description: "Syncing 3 repositories",
+    icon: "github",
+    status: "active",
+    lastSync: "2 minutes ago",
+    syncCount: 847,
+    config: { org: "imranusmaneii" },
+  },
+  {
+    id: "2",
+    provider: "slack",
+    name: "Slack — Engineering",
+    description: "Syncing #dev and #ops channels",
+    icon: "slack",
+    status: "active",
+    lastSync: "15 minutes ago",
+    syncCount: 2341,
+    config: { workspace: "engineering" },
+  },
+  {
+    id: "3",
+    provider: "notion",
+    name: "Notion — Product Wiki",
+    description: "Syncing product documentation",
+    icon: "notion",
+    status: "inactive",
+    lastSync: null,
+    syncCount: 0,
+    config: {},
+  },
+];
 
 export default function IntegrationsPage() {
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [integrations, setIntegrations] = useState<Integration[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-  const [configForm, setConfigForm] = useState<Record<string, string>>({});
-  const [showConfig, setShowConfig] = useState(false);
-  const [testingId, setTestingId] = useState<string | null>(null);
-  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [integrations, setIntegrations] = useState<Integration[]>(INITIAL_INTEGRATIONS);
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"connected" | "available">("connected");
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [provRes, intRes] = await Promise.all([
-        apiClient.get<Provider[]>("/integrations/providers"),
-        apiClient.get<{ integrations: Integration[]; total: number }>("/integrations"),
-      ]);
-      if (provRes.data) setProviders(provRes.data);
-      if (intRes.data) setIntegrations(intRes.data.integrations || []);
-    } catch {
-      setProviders([
-        { id: "github", name: "GitHub", description: "Sync repositories, issues, PRs", icon: "github", fields: [{ name: "token", type: "password", label: "PAT Token", required: true }] },
-        { id: "slack", name: "Slack", description: "Sync messages & channels", icon: "slack", fields: [{ name: "token", type: "password", label: "Bot Token", required: true }] },
-        { id: "notion", name: "Notion", description: "Sync pages & databases", icon: "notion", fields: [{ name: "token", type: "password", label: "Integration Token", required: true }] },
-        { id: "jira", name: "Jira", description: "Sync issues & projects", icon: "jira", fields: [{ name: "token", type: "password", label: "API Token", required: true }] },
-        { id: "google_drive", name: "Google Drive", description: "Sync documents & files", icon: "google_drive", fields: [{ name: "token", type: "password", label: "OAuth2 Token", required: true }] },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const filteredProviders = PROVIDERS.filter(
+    (p) =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleAdd = (provider: Provider) => {
-    setSelectedProvider(provider);
-    setConfigForm({ name: provider.name });
-    setShowConfig(true);
-  };
-
-  const handleCreate = async () => {
-    if (!selectedProvider) return;
-    try {
-      await apiClient.post("/integrations", {
-        provider: selectedProvider.id,
-        name: configForm.name || selectedProvider.name,
-        config: configForm,
-        credentials: configForm.token || null,
-      });
-      setShowConfig(false);
-      fetchData();
-    } catch {}
-  };
-
-  const handleTest = async (id: string) => {
-    setTestingId(id);
-    try {
-      await apiClient.post(`/integrations/${id}/test`);
-    } catch {}
-    setTestingId(null);
-  };
+  const connectedIds = integrations.map((i) => i.provider);
 
   const handleSync = async (id: string) => {
     setSyncingId(id);
-    try {
-      await apiClient.post(`/integrations/${id}/sync`);
-    } catch {}
+    await new Promise((r) => setTimeout(r, 2000));
+    setIntegrations((prev) =>
+      prev.map((i) =>
+        i.id === id
+          ? { ...i, lastSync: "Just now", syncCount: i.syncCount + Math.floor(Math.random() * 50) }
+          : i
+      )
+    );
     setSyncingId(null);
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await apiClient.delete(`/integrations/${id}`);
-      fetchData();
-    } catch {}
+  const handleConnect = (providerId: string) => {
+    const provider = PROVIDERS.find((p) => p.id === providerId);
+    if (!provider) return;
+
+    const newIntegration: Integration = {
+      id: Date.now().toString(),
+      provider: providerId,
+      name: `${provider.name} — Connected`,
+      description: provider.description,
+      icon: providerId,
+      status: "active",
+      lastSync: "Just now",
+      syncCount: 0,
+      config: {},
+    };
+
+    setIntegrations((prev) => [...prev, newIntegration]);
+    setSelectedProvider(null);
   };
 
-  const getProviderForIntegration = (integ: Integration) =>
-    providers.find((p) => p.id === integ.provider) || null;
-
-  const filteredProviders = providers.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleDisconnect = (id: string) => {
+    setIntegrations((prev) => prev.filter((i) => i.id !== id));
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Integrations</h1>
-          <p className="text-sm text-[#94A3B8]">Connect external services to power your AI operations</p>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94A3B8]" />
-          <input
-            type="text"
-            placeholder="Search providers..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-64 rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-[#94A3B8] outline-none focus:border-[#7C3AED]/50"
-          />
+          <p className="text-sm text-[#94A3B8]">Connect your tools to enhance OpsPilot&apos;s knowledge</p>
         </div>
       </div>
 
-      {integrations.length > 0 && (
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          { label: "Connected", value: integrations.filter((i) => i.status === "active").length, color: "text-emerald-400" },
+          { label: "Total Synced", value: integrations.reduce((sum, i) => sum + i.syncCount, 0).toLocaleString(), color: "text-[#A78BFA]" },
+          { label: "Available", value: PROVIDERS.length, color: "text-[#94A3B8]" },
+          { label: "Last Sync", value: "2m ago", color: "text-[#94A3B8]" },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="rounded-xl border border-white/[0.06] bg-[#0A0F1E]/60 p-4 backdrop-blur-xl"
+          >
+            <p className="text-xs text-[#64748B]">{stat.label}</p>
+            <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-white/[0.06] pb-2">
+        <button
+          onClick={() => setActiveTab("connected")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "connected"
+              ? "bg-[#7C3AED]/15 text-[#A78BFA]"
+              : "text-[#94A3B8] hover:text-white"
+          }`}
+        >
+          Connected ({integrations.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("available")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "available"
+              ? "bg-[#7C3AED]/15 text-[#A78BFA]"
+              : "text-[#94A3B8] hover:text-white"
+          }`}
+        >
+          Available ({PROVIDERS.length})
+        </button>
+      </div>
+
+      {activeTab === "connected" ? (
         <div className="space-y-3">
-          <h2 className="text-sm font-medium text-[#94A3B8] uppercase tracking-wider">Active Connections</h2>
-          <div className="grid gap-3">
-            {integrations.map((integ) => {
-              const provider = getProviderForIntegration(integ);
+          {integrations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 py-16">
+              <Plug className="mb-4 h-12 w-12 text-[#475569]" />
+              <p className="text-sm text-[#94A3B8]">No integrations connected</p>
+              <p className="text-xs text-[#475569]">Browse available integrations to get started</p>
+              <button
+                onClick={() => setActiveTab("available")}
+                className="mt-4 rounded-xl bg-[#7C3AED] px-4 py-2 text-sm font-medium text-white hover:bg-[#7C3AED]/90"
+              >
+                Browse Integrations
+              </button>
+            </div>
+          ) : (
+            integrations.map((integration, i) => {
+              const provider = PROVIDERS.find((p) => p.id === integration.provider);
               return (
                 <motion.div
-                  key={integ.id}
-                  initial={{ opacity: 0, y: 8 }}
+                  key={integration.id}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm"
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-5 backdrop-blur-xl transition-all hover:border-white/[0.1]"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${ICON_COLORS[integ.provider] || "bg-white/10 text-white"}`}>
-                      {ICONS[integ.provider] || <Plug className="h-5 w-5" />}
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${provider?.color || "bg-white/10 text-white"}`}>
+                    {ICON_MAP[integration.icon] || <Plug className="h-6 w-6" />}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-white">{integration.name}</h3>
+                      <span
+                        className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+                          integration.status === "active"
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : integration.status === "error"
+                            ? "bg-red-500/10 text-red-400"
+                            : "bg-[#475569]/10 text-[#64748B]"
+                        }`}
+                      >
+                        {integration.status}
+                      </span>
                     </div>
-                    <div>
-                      <div className="font-medium">{integ.name}</div>
-                      <div className="text-xs text-[#94A3B8]">{provider?.name || integ.provider}</div>
+                    <p className="mt-0.5 text-xs text-[#475569]">{integration.description}</p>
+                    <div className="mt-2 flex items-center gap-4 text-[10px] text-[#475569]">
+                      {integration.lastSync && <span>Last sync: {integration.lastSync}</span>}
+                      <span>{integration.syncCount.toLocaleString()} items synced</span>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-2">
-                    <span className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[integ.status]}`}>
-                      {integ.status}
-                    </span>
                     <button
-                      onClick={() => handleTest(integ.id)}
-                      disabled={testingId === integ.id}
-                      className="rounded-lg border border-white/10 bg-white/5 p-2 text-[#94A3B8] transition-colors hover:text-white"
+                      onClick={() => handleSync(integration.id)}
+                      disabled={syncingId === integration.id}
+                      className="rounded-lg p-2 text-[#475569] transition-colors hover:bg-white/[0.06] hover:text-[#94A3B8] disabled:opacity-50"
                     >
-                      <Zap className={`h-4 w-4 ${testingId === integ.id ? "animate-pulse text-[#7C3AED]" : ""}`} />
+                      <RefreshCw className={`h-4 w-4 ${syncingId === integration.id ? "animate-spin" : ""}`} />
+                    </button>
+                    <button className="rounded-lg p-2 text-[#475569] transition-colors hover:bg-white/[0.06] hover:text-[#94A3B8]">
+                      <Settings className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleSync(integ.id)}
-                      disabled={syncingId === integ.id}
-                      className="rounded-lg border border-white/10 bg-white/5 p-2 text-[#94A3B8] transition-colors hover:text-white"
-                    >
-                      <RefreshCw className={`h-4 w-4 ${syncingId === integ.id ? "animate-spin text-[#2563EB]" : ""}`} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(integ.id)}
-                      className="rounded-lg border border-white/10 bg-white/5 p-2 text-[#94A3B8] transition-colors hover:text-red-400"
+                      onClick={() => handleDisconnect(integration.id)}
+                      className="rounded-lg p-2 text-[#475569] transition-colors hover:bg-red-500/10 hover:text-red-400"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </motion.div>
               );
+            })
+          )}
+        </div>
+      ) : (
+        <div>
+          <div className="relative mb-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search integrations..."
+              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 pl-10 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#7C3AED]/40"
+            />
+            <Zap className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#475569]" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {filteredProviders.map((provider, i) => {
+              const isConnected = connectedIds.includes(provider.id);
+              return (
+                <motion.div
+                  key={provider.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="flex items-start gap-4 rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-5 backdrop-blur-xl transition-all hover:border-white/[0.1]"
+                >
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${provider.color}`}>
+                    {ICON_MAP[provider.icon]}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-white">{provider.name}</h3>
+                      <span className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-[#475569]">
+                        {provider.category}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-[#475569]">{provider.description}</p>
+                  </div>
+
+                  <button
+                    onClick={() => (isConnected ? null : handleConnect(provider.id))}
+                    disabled={isConnected}
+                    className={`shrink-0 rounded-xl px-4 py-2 text-xs font-medium transition-all ${
+                      isConnected
+                        ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                        : "bg-[#7C3AED] text-white hover:bg-[#7C3AED]/90"
+                    }`}
+                  >
+                    {isConnected ? (
+                      <span className="flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" /> Connected
+                      </span>
+                    ) : (
+                      "Connect"
+                    )}
+                  </button>
+                </motion.div>
+              );
             })}
           </div>
         </div>
       )}
-
-      <div className="space-y-3">
-        <h2 className="text-sm font-medium text-[#94A3B8] uppercase tracking-wider">Available Providers</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProviders.map((provider, i) => (
-            <motion.button
-              key={provider.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              onClick={() => handleAdd(provider)}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 text-left backdrop-blur-sm transition-all hover:border-[#7C3AED]/30 hover:bg-white/[0.08]"
-            >
-              <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full blur-3xl opacity-0 transition-opacity group-hover:opacity-100 ${provider.id === "github" ? "bg-white/10" : provider.id === "slack" ? "bg-[#4A154B]/20" : provider.id === "notion" ? "bg-white/10" : provider.id === "jira" ? "bg-[#0052CC]/20" : "bg-[#0F9D58]/20"}`} />
-              <div className="relative">
-                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${ICON_COLORS[provider.id] || "bg-white/10 text-white"}`}>
-                  {ICONS[provider.id] || <Plug className="h-6 w-6" />}
-                </div>
-                <h3 className="mb-1 font-semibold text-white">{provider.name}</h3>
-                <p className="mb-4 text-sm text-[#94A3B8]">{provider.description}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#94A3B8]">{provider.fields.length} fields</span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7C3AED]/15 text-[#7C3AED] transition-all group-hover:bg-[#7C3AED] group-hover:text-white">
-                    <Plus className="h-4 w-4" />
-                  </div>
-                </div>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {showConfig && selectedProvider && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowConfig(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0F172A] p-6 shadow-2xl"
-            >
-              <div className="mb-6 flex items-center gap-3">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${ICON_COLORS[selectedProvider.id] || "bg-white/10 text-white"}`}>
-                  {ICONS[selectedProvider.id] || <Plug className="h-5 w-5" />}
-                </div>
-                <div>
-                  <h3 className="font-semibold">Connect {selectedProvider.name}</h3>
-                  <p className="text-xs text-[#94A3B8]">{selectedProvider.description}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-[#94A3B8]">Connection Name</label>
-                  <input
-                    type="text"
-                    value={configForm.name || ""}
-                    onChange={(e) => setConfigForm((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder={selectedProvider.name}
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-[#94A3B8] outline-none focus:border-[#7C3AED]/50"
-                  />
-                </div>
-                {selectedProvider.fields.map((field) => (
-                  <div key={field.name}>
-                    <label className="mb-1.5 block text-xs font-medium text-[#94A3B8]">
-                      {field.label} {field.required && <span className="text-red-400">*</span>}
-                    </label>
-                    <input
-                      type={field.type === "password" ? "password" : "text"}
-                      value={configForm[field.name] || ""}
-                      onChange={(e) => setConfigForm((prev) => ({ ...prev, [field.name]: e.target.value }))}
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-[#94A3B8] outline-none focus:border-[#7C3AED]/50"
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={() => setShowConfig(false)}
-                  className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-[#94A3B8] transition-colors hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreate}
-                  className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#7C3AED]/90"
-                >
-                  Connect
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

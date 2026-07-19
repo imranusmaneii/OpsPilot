@@ -14,7 +14,28 @@ import {
   RefreshCw,
   Check,
   Sparkles,
+  Monitor,
+  Moon,
+  Sun,
 } from "lucide-react";
+
+type Theme = "dark" | "midnight" | "oled";
+type AccentColor = string;
+
+const ACCENT_COLORS = [
+  { name: "Purple", value: "#7C3AED" },
+  { name: "Blue", value: "#2563EB" },
+  { name: "Emerald", value: "#059669" },
+  { name: "Amber", value: "#D97706" },
+  { name: "Red", value: "#DC2626" },
+  { name: "Pink", value: "#EC4899" },
+];
+
+const THEMES: { label: string; value: Theme; icon: typeof Moon; bg: string }[] = [
+  { label: "Dark", value: "dark", icon: Moon, bg: "bg-[#050810]" },
+  { label: "Midnight", value: "midnight", icon: Monitor, bg: "bg-[#0B1120]" },
+  { label: "OLED", value: "oled", icon: Sun, bg: "bg-black" },
+];
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -22,7 +43,38 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [apiKey] = useState("opspilot_k8x92mN4pQ7wR3tY6bV1cZ5aF0dG");
 
+  const [currentTheme, setCurrentTheme] = useState<Theme>("dark");
+  const [currentAccent, setCurrentAccent] = useState<AccentColor>("#7C3AED");
+  const [compactSidebar, setCompactSidebar] = useState(false);
+  const [notifications, setNotifications] = useState({
+    docIndexing: true,
+    evaluation: true,
+    apiKeyUsage: true,
+    newIntegration: false,
+    weeklySummary: false,
+    securityAlerts: true,
+  });
+
   const handleSave = () => {
+    // Apply accent color as CSS variable
+    document.documentElement.style.setProperty("--accent-purple", currentAccent);
+
+    // Apply theme
+    const root = document.documentElement;
+    root.classList.remove("dark", "midnight", "oled");
+    root.classList.add(currentTheme);
+
+    if (currentTheme === "oled") {
+      root.style.setProperty("--background", "#000000");
+      root.style.setProperty("--secondary", "#0A0A0A");
+    } else if (currentTheme === "midnight") {
+      root.style.setProperty("--background", "#0B1120");
+      root.style.setProperty("--secondary", "#111827");
+    } else {
+      root.style.setProperty("--background", "#050810");
+      root.style.setProperty("--secondary", "#0A0F1E");
+    }
+
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -46,17 +98,17 @@ export default function SettingsPage() {
         <p className="text-sm text-[#64748B]">Manage your account, API keys, and preferences</p>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-6 md:flex-row">
         {/* Tabs */}
-        <div className="w-56 shrink-0">
-          <div className="space-y-1 rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-2 backdrop-blur-xl">
+        <div className="w-full shrink-0 md:w-56">
+          <div className="flex gap-2 overflow-x-auto md:flex-col md:gap-1 md:rounded-2xl md:border md:border-white/[0.06] md:bg-[#0A0F1E]/60 md:p-2 md:backdrop-blur-xl">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                  className={`flex items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                     activeTab === tab.id
                       ? "bg-[#7C3AED]/15 text-[#A78BFA]"
                       : "text-[#475569] hover:bg-white/[0.04] hover:text-[#94A3B8]"
@@ -233,26 +285,32 @@ export default function SettingsPage() {
               <h3 className="mb-4 text-lg font-semibold text-white">Notification Preferences</h3>
               <div className="space-y-4">
                 {[
-                  { label: "Document indexing complete", desc: "Get notified when documents finish processing", default: true },
-                  { label: "Evaluation finished", desc: "Receive alerts when evaluations complete", default: true },
-                  { label: "API key usage warnings", desc: "Alert when approaching usage limits", default: true },
-                  { label: "New integration available", desc: "Updates on new connector releases", default: false },
-                  { label: "Weekly usage summary", desc: "Receive a weekly analytics digest", default: false },
-                  { label: "Security alerts", desc: "Critical security notifications", default: true },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  { key: "docIndexing" as const, label: "Document indexing complete", desc: "Get notified when documents finish processing" },
+                  { key: "evaluation" as const, label: "Evaluation finished", desc: "Receive alerts when evaluations complete" },
+                  { key: "apiKeyUsage" as const, label: "API key usage warnings", desc: "Alert when approaching usage limits" },
+                  { key: "newIntegration" as const, label: "New integration available", desc: "Updates on new connector releases" },
+                  { key: "weeklySummary" as const, label: "Weekly usage summary", desc: "Receive a weekly analytics digest" },
+                  { key: "securityAlerts" as const, label: "Security alerts", desc: "Critical security notifications" },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
                     <div>
                       <p className="text-sm font-medium text-white">{item.label}</p>
                       <p className="text-xs text-[#475569]">{item.desc}</p>
                     </div>
                     <button
+                      onClick={() =>
+                        setNotifications((prev) => ({
+                          ...prev,
+                          [item.key]: !prev[item.key],
+                        }))
+                      }
                       className={`relative h-6 w-11 rounded-full transition-colors ${
-                        item.default ? "bg-[#7C3AED]" : "bg-white/[0.08]"
+                        notifications[item.key] ? "bg-[#7C3AED]" : "bg-white/[0.08]"
                       }`}
                     >
                       <span
                         className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                          item.default ? "left-[22px]" : "left-0.5"
+                          notifications[item.key] ? "left-[22px]" : "left-0.5"
                         }`}
                       />
                     </button>
@@ -334,45 +392,94 @@ export default function SettingsPage() {
 
           {activeTab === "appearance" && (
             <div className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-6 backdrop-blur-xl">
-              <h3 className="mb-4 text-lg font-semibold text-white">Appearance</h3>
-              <div className="space-y-6">
+              <h3 className="mb-6 text-lg font-semibold text-white">Appearance</h3>
+              <div className="space-y-8">
+                {/* Theme Selection */}
                 <div>
                   <p className="mb-3 text-sm font-medium text-white">Theme</p>
                   <div className="flex gap-3">
-                    {[
-                      { label: "Dark", active: true },
-                      { label: "Midnight", active: false },
-                      { label: "OLED", active: false },
-                    ].map((theme) => (
-                      <button
-                        key={theme.label}
-                        className={`rounded-xl border px-6 py-3 text-sm font-medium transition-all ${
-                          theme.active
-                            ? "border-[#7C3AED]/40 bg-[#7C3AED]/10 text-[#A78BFA]"
-                            : "border-white/[0.06] bg-white/[0.02] text-[#475569] hover:bg-white/[0.04] hover:text-[#94A3B8]"
-                        }`}
-                      >
-                        {theme.label}
-                      </button>
-                    ))}
+                    {THEMES.map((theme) => {
+                      const Icon = theme.icon;
+                      const isActive = currentTheme === theme.value;
+                      return (
+                        <button
+                          key={theme.value}
+                          onClick={() => setCurrentTheme(theme.value)}
+                          className={`flex items-center gap-3 rounded-xl border px-6 py-3 text-sm font-medium transition-all ${
+                            isActive
+                              ? "border-[#7C3AED]/40 bg-[#7C3AED]/10 text-[#A78BFA]"
+                              : "border-white/[0.06] bg-white/[0.02] text-[#475569] hover:bg-white/[0.04] hover:text-[#94A3B8]"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          <div className="text-left">
+                            <div>{theme.label}</div>
+                            <div className={`mt-1 h-2 w-8 rounded-full ${theme.bg} border border-white/[0.1]`} />
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
+
+                {/* Accent Color */}
                 <div>
                   <p className="mb-3 text-sm font-medium text-white">Accent Color</p>
-                  <div className="flex gap-2">
-                    {["#7C3AED", "#2563EB", "#059669", "#D97706", "#DC2626", "#EC4899"].map(
-                      (color, i) => (
+                  <div className="flex gap-3">
+                    {ACCENT_COLORS.map((color) => {
+                      const isActive = currentAccent === color.value;
+                      return (
                         <button
-                          key={color}
-                          className={`h-8 w-8 rounded-full transition-transform hover:scale-110 ${
-                            i === 0 ? "ring-2 ring-offset-2 ring-offset-[#0A0F1E]" : ""
-                          }`}
-                          style={{ backgroundColor: color, boxShadow: i === 0 ? `0 0 0 2px #0A0F1E, 0 0 0 4px ${color}` : undefined }}
-                        />
-                      )
-                    )}
+                          key={color.value}
+                          onClick={() => setCurrentAccent(color.value)}
+                          className="group flex flex-col items-center gap-1.5"
+                        >
+                          <div
+                            className={`h-9 w-9 rounded-full transition-all hover:scale-110 ${
+                              isActive ? "ring-2 ring-offset-2 ring-offset-[#0A0F1E]" : ""
+                            }`}
+                            style={{
+                              backgroundColor: color.value,
+                              boxShadow: isActive
+                                ? `0 0 0 2px #0A0F1E, 0 0 0 4px ${color.value}`
+                                : undefined,
+                            }}
+                          />
+                          <span className={`text-[10px] ${isActive ? "text-white" : "text-[#475569]"}`}>
+                            {color.name}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
+
+                {/* Preview */}
+                <div>
+                  <p className="mb-3 text-sm font-medium text-white">Preview</p>
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: currentAccent }}
+                      />
+                      <div className="h-2 flex-1 rounded-full bg-white/[0.06]">
+                        <div
+                          className="h-full w-3/4 rounded-full transition-colors"
+                          style={{ backgroundColor: currentAccent }}
+                        />
+                      </div>
+                      <button
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors"
+                        style={{ backgroundColor: currentAccent }}
+                      >
+                        Button
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sidebar Compact */}
                 <div>
                   <p className="mb-3 text-sm font-medium text-white">Sidebar</p>
                   <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
@@ -380,12 +487,22 @@ export default function SettingsPage() {
                       <p className="text-sm text-white">Compact Mode</p>
                       <p className="text-xs text-[#475569]">Show only icons in sidebar</p>
                     </div>
-                    <button className="relative h-6 w-11 rounded-full bg-white/[0.08]">
-                      <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white" />
+                    <button
+                      onClick={() => setCompactSidebar(!compactSidebar)}
+                      className={`relative h-6 w-11 rounded-full transition-colors ${
+                        compactSidebar ? "bg-[#7C3AED]" : "bg-white/[0.08]"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                          compactSidebar ? "left-[22px]" : "left-0.5"
+                        }`}
+                      />
                     </button>
                   </div>
                 </div>
               </div>
+
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={handleSave}

@@ -107,7 +107,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     needs: [backend, frontend]
-    if: github.ref == 'refs/heads/main'
+    if: false # Disabled - GHCR needs org permissions
 
     steps:
       - uses: actions/checkout@v4

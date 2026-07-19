@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Database,
@@ -19,8 +19,8 @@ import {
   Layers,
   DollarSign,
   Network,
+  X,
 } from "lucide-react";
-import { useState } from "react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -28,8 +28,9 @@ const navItems = [
   { href: "/dashboard/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/chat", label: "Chat", icon: MessageSquare },
   { href: "/dashboard/agents", label: "Agents", icon: Bot },
-  { href: "/dashboard/playground", label: "Playground", icon: FlaskConical },
-  { href: "/dashboard/evaluation", label: "Evaluation", icon: BarChart3 },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/dashboard/evaluation", label: "Evaluation", icon: FlaskConical },
+  { href: "/dashboard/playground", label: "Playground", icon: Sparkles },
   { href: "/dashboard/model-comparison", label: "Model Comparison", icon: Layers },
   { href: "/dashboard/cost-estimator", label: "Cost Estimator", icon: DollarSign },
   { href: "/dashboard/embeddings", label: "Embeddings", icon: Network },
@@ -37,33 +38,35 @@ const navItems = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
-  const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+interface SidebarProps {
+  collapsed: boolean;
+  onToggle: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
 
-  return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 72 : 260 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="flex h-screen flex-col border-r border-[rgba(255,255,255,0.08)] bg-[#0F172A]/50 backdrop-blur-xl"
-    >
-      <div className="flex h-16 items-center gap-3 border-b border-[rgba(255,255,255,0.08)] px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#7C3AED]/20">
-          <Sparkles className="h-4 w-4 text-[#7C3AED]" />
+export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
+  const pathname = usePathname();
+
+  const sidebarContent = (
+    <>
+      <div className="flex h-16 items-center gap-3 border-b border-white/[0.06] px-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED] to-[#2563EB] shadow-lg shadow-[#7C3AED]/20">
+          <Sparkles className="h-5 w-5 text-white" />
         </div>
         {!collapsed && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="whitespace-nowrap text-sm font-bold"
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col"
           >
-            OpsPilot AI
-          </motion.span>
+            <span className="text-sm font-bold tracking-tight text-white">OpsPilot</span>
+            <span className="text-[10px] font-medium tracking-widest uppercase text-[#7C3AED]">AI Platform</span>
+          </motion.div>
         )}
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-0.5 px-3 py-3 overflow-y-auto scrollbar-thin">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -74,13 +77,18 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+              onClick={onMobileClose}
+              className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? "bg-[#7C3AED]/15 text-[#7C3AED]"
-                  : "text-[#94A3B8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white"
+                  ? "bg-[#7C3AED]/15 text-[#A78BFA] shadow-sm shadow-[#7C3AED]/10"
+                  : "text-[#64748B] hover:bg-white/[0.04] hover:text-[#CBD5E1]"
               }`}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon
+                className={`h-[18px] w-[18px] shrink-0 transition-colors ${
+                  isActive ? "text-[#A78BFA]" : "text-[#475569] group-hover:text-[#94A3B8]"
+                }`}
+              />
               {!collapsed && (
                 <motion.span
                   initial={{ opacity: 0 }}
@@ -90,23 +98,80 @@ export function Sidebar() {
                   {item.label}
                 </motion.span>
               )}
+              {isActive && !collapsed && (
+                <motion.div
+                  layoutId="activeIndicator"
+                  className="ml-auto h-1.5 w-1.5 rounded-full bg-[#7C3AED]"
+                />
+              )}
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-[rgba(255,255,255,0.08)] p-3">
+      <div className="border-t border-white/[0.06] p-3">
         <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex w-full items-center justify-center rounded-xl p-2 text-[#94A3B8] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-white"
+          onClick={onToggle}
+          className="hidden lg:flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-[#475569] transition-colors hover:bg-white/[0.04] hover:text-[#94A3B8]"
         >
           {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
+            <>
+              <ChevronRight className="h-4 w-4" />
+            </>
           ) : (
-            <ChevronLeft className="h-4 w-4" />
+            <>
+              <ChevronLeft className="h-4 w-4" />
+              <span>Collapse</span>
+            </>
           )}
         </button>
       </div>
-    </motion.aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <motion.aside
+        initial={false}
+        animate={{ width: collapsed ? 72 : 260 }}
+        transition={{ duration: 0.2, ease: "easeInOut" }}
+        className="hidden lg:flex h-screen flex-col border-r border-white/[0.06] bg-[#0A0F1E]/90 backdrop-blur-2xl"
+      >
+        {sidebarContent}
+      </motion.aside>
+
+      {/* Mobile sidebar overlay */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onMobileClose}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+            />
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-white/[0.06] bg-[#0A0F1E]/95 backdrop-blur-2xl lg:hidden"
+            >
+              <div className="absolute right-3 top-4">
+                <button
+                  onClick={onMobileClose}
+                  className="rounded-lg p-1.5 text-[#475569] hover:bg-white/[0.06] hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              {sidebarContent}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

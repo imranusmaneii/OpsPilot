@@ -10,16 +10,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#070B14",
+        background: "#050810",
         foreground: "#FFFFFF",
-        secondary: "#0F172A",
-        card: "rgba(255,255,255,0.05)",
+        secondary: "#0A0F1E",
+        card: "rgba(255,255,255,0.03)",
         accent: {
           purple: "#7C3AED",
           blue: "#2563EB",
         },
         muted: "#94A3B8",
-        border: "rgba(255,255,255,0.08)",
+        border: "rgba(255,255,255,0.06)",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
@@ -42,8 +42,8 @@ const config: Config = {
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         glow: {
-          "0%": { boxShadow: "0 0 20px rgba(124,58,237,0.15)" },
-          "100%": { boxShadow: "0 0 40px rgba(124,58,237,0.3)" },
+          "0%": { boxShadow: "0 0 20px rgba(124,58,237,0.12)" },
+          "100%": { boxShadow: "0 0 40px rgba(124,58,237,0.25)" },
         },
         float: {
           "0%, 100%": { transform: "translateY(0px)" },

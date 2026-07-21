@@ -15,8 +15,10 @@ import {
   Plus,
   X,
   Upload,
-  CheckCircle,
+  LogIn,
 } from "lucide-react";
+import Link from "next/link";
+import { useAuthStore } from "@/stores/auth-store";
 
 interface Message {
   id: string;
@@ -42,6 +44,19 @@ interface UploadedDoc {
   type: string;
 }
 
+const FREE_MESSAGE_LIMIT = 5;
+
+function getFreeMessageCount(): number {
+  if (typeof window === "undefined") return 0;
+  return parseInt(localStorage.getItem("opspilot_free_messages") || "0", 10);
+}
+
+function incrementFreeMessageCount(): number {
+  const count = getFreeMessageCount() + 1;
+  localStorage.setItem("opspilot_free_messages", String(count));
+  return count;
+}
+
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) {
@@ -59,9 +74,20 @@ function loadScript(src: string): Promise<void> {
 async function extractPdfText(file: File): Promise<string> {
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
 
-  const pdfjsLib = (window as Record<string, unknown>["pdfjsLib"]) as {
+  const pdfjsLib = (window as unknown as Record<string, unknown>)["pdfjsLib"] as {
     GlobalWorkerOptions: { workerSrc: string };
-    getDocument: (data: Uint8Array) => Promise<{ numPages: number; getPage: (n: number) => Promise<{ getTextContent: () => Promise<{ items: Array<{ str: string }> }> }> }>;
+    getDocument: (data: Uint8Array) => {
+      promise: Promise<{
+        numPages: number;
+        getPage: (
+          n: number
+        ) => Promise<{
+          getTextContent: () => Promise<{
+            items: Array<{ str: string }>;
+          }>;
+        }>;
+      }>;
+    };
   };
 
   if (!pdfjsLib) throw new Error("PDF.js failed to load");
@@ -86,10 +112,16 @@ async function extractPdfText(file: File): Promise<string> {
 }
 
 async function extractDocxText(file: File): Promise<string> {
-  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js");
+  await loadScript(
+    "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"
+  );
 
-  const mammoth = (window as Record<string, unknown>)["mammoth"] as {
-    extractRawText: (input: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }>;
+  const mammoth = (window as unknown as Record<string, unknown>)[
+    "mammoth"
+  ] as {
+    extractRawText: (input: {
+      arrayBuffer: ArrayBuffer;
+    }) => Promise<{ value: string }>;
   };
 
   if (!mammoth) throw new Error("Mammoth failed to load");
@@ -110,88 +142,396 @@ async function extractText(file: File): Promise<string> {
     return extractDocxText(file);
   }
 
-  // Plain text files: txt, md, csv, json, js, ts, py, etc.
   return file.text();
 }
 
-function generateDocResponse(query: string, docs: UploadedDoc[]): { content: string; sources: Source[] } {
-  const queryLower = query.toLowerCase();
-  const docContext = docs.map((d) => `[${d.name}]\n${d.text.slice(0, 8000)}`).join("\n\n---\n\n");
+function extractKeyEntities(text: string): {
+  names: string[];
+  dates: string[];
+  organizations: string[];
+  numbers: string[];
+  titles: string[];
+} {
+  const names: string[] = [];
+  const dates: string[] = [];
+  const organizations: string[] = [];
+  const numbers: string[] = [];
+  const titles: string[] = [];
 
-  // Find relevant sections from uploaded docs
-  const queryWords = queryLower.split(/\s+/).filter((w) => w.length > 3);
-  const sentences: string[] = [];
+  const datePatterns = [
+    /(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/g,
+    /(\w+ \d{1,2},? \d{4})/g,
+    /(\d{1,2}\s+\w+\s+\d{4})/g,
+  ];
+  for (const pattern of datePatterns) {
+    const matches = text.match(pattern);
+    if (matches) dates.push(...matches.slice(0, 10));
+  }
+
+  const orgPatterns = [
+    /(?:issued by|from|organization|institution|company|university|academy|institute|council|association|board|department|ministry|bureau|corporation|foundation)\s*[:\-]?\s*([A-Z][A-Za-z\s&,\.]+?)(?:\n|\.|,|$)/gi,
+    /([A-Z][A-Za-z]+(?:\s+(?:University|College|Institute|Academy|Corporation|Foundation|Council|Association|Board|Department|Ministry|Bureau|Company|Inc|Ltd|LLC|Corp)))/g,
+  ];
+  for (const pattern of orgPatterns) {
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      organizations.push(match[1]?.trim() || match[0]?.trim());
+    }
+  }
+
+  const namePatterns = [
+    /(?:presented to|awarded to|certif(?:y|ies) that|this is to certify that|name)\s*[:\-]?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/gi,
+    /(?:recipient|winner|participant|student|candidate|employee|member)\s*[:\-]?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/gi,
+  ];
+  for (const pattern of namePatterns) {
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      names.push(match[1]?.trim());
+    }
+  }
+
+  const titlePatterns = [
+    /(?:title|subject|course|program|training|certificate|diploma|degree)\s*[:\-]?\s*(.{5,80}?)(?:\n|\.|$)/gi,
+    /(?:re:|regarding:|about:)\s*(.{5,80}?)(?:\n|\.|$)/gi,
+  ];
+  for (const pattern of titlePatterns) {
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      titles.push(match[1]?.trim());
+    }
+  }
+
+  const numMatches = text.match(
+    /\b\d+(?:\.\d+)?(?:\s*%|\s*(?:USD|EUR|GBP|\$|€|£)|\s*(?:million|billion|thousand))\b/g
+  );
+  if (numMatches) numbers.push(...numMatches.slice(0, 15));
+
+  return {
+    names: [...new Set(names)].slice(0, 10),
+    dates: [...new Set(dates)].slice(0, 10),
+    organizations: [...new Set(organizations)].slice(0, 10),
+    numbers: [...new Set(numbers)].slice(0, 10),
+    titles: [...new Set(titles)].slice(0, 10),
+  };
+}
+
+function findRelevantSections(
+  query: string,
+  docs: UploadedDoc[],
+  maxSections: number = 15
+): { text: string; doc: string; score: number }[] {
+  const queryLower = query.toLowerCase();
+  const queryWords = queryLower
+    .split(/\s+/)
+    .filter((w) => w.length > 2)
+    .filter(
+      (w) =>
+        ![
+          "the",
+          "and",
+          "for",
+          "what",
+          "who",
+          "how",
+          "when",
+          "where",
+          "why",
+          "this",
+          "that",
+          "with",
+          "from",
+          "about",
+          "tell",
+          "give",
+          "show",
+          "list",
+          "describe",
+          "explain",
+          "summarize",
+          "which",
+          "were",
+          "was",
+          "are",
+          "does",
+          "have",
+          "has",
+          "can",
+          "could",
+          "would",
+          "should",
+          "does",
+          "don't",
+          "is",
+          "it",
+        ].includes(w)
+    );
+
+  const allSections: { text: string; doc: string; score: number }[] = [];
+
   docs.forEach((doc) => {
-    const docSentences = doc.text.split(/[.!?\n]+/).filter((s) => s.trim().length > 20);
-    docSentences.forEach((s) => {
-      const sLower = s.toLowerCase();
-      const relevance = queryWords.filter((w) => sLower.includes(w)).length;
-      if (relevance > 0) {
-        sentences.push({ text: s.trim(), relevance, doc: doc.name } as unknown as string);
+    const paragraphs = doc.text
+      .split(/\n\n+/)
+      .filter((p) => p.trim().length > 10);
+
+    paragraphs.forEach((para) => {
+      const paraLower = para.toLowerCase();
+      let score = 0;
+
+      queryWords.forEach((word) => {
+        const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi");
+        const matches = paraLower.match(regex);
+        if (matches) {
+          score += matches.length * 2;
+        }
+      });
+
+      const queryPhrase = queryLower.replace(/[?!.]/g, "").trim();
+      if (paraLower.includes(queryPhrase)) {
+        score += 10;
+      }
+
+      const importantPatterns = [
+        /certif/i,
+        /award/i,
+        /presented/i,
+        /issued/i,
+        /name\s*:/i,
+        /title\s*:/i,
+        /date\s*:/i,
+        /authoriz/i,
+        /sign/i,
+        /complet/i,
+      ];
+      importantPatterns.forEach((pattern) => {
+        if (pattern.test(query) && pattern.test(para)) {
+          score += 3;
+        }
+      });
+
+      if (score > 0) {
+        allSections.push({
+          text: para.trim().slice(0, 1500),
+          doc: doc.name,
+          score,
+        });
       }
     });
   });
 
-  const sortedSentences = (sentences as unknown as { text: string; relevance: number; doc: string }[])
-    .sort((a, b) => b.relevance - a.relevance)
-    .slice(0, 8);
+  allSections.sort((a, b) => b.score - a.score);
+  return allSections.slice(0, maxSections);
+}
 
-  const sources: Source[] = sortedSentences.slice(0, 3).map((s) => ({
+function detectDocumentType(text: string): string {
+  const lower = text.toLowerCase();
+  if (
+    lower.includes("certificate") ||
+    lower.includes("certify that") ||
+    lower.includes("this is to certify") ||
+    lower.includes("has successfully completed")
+  )
+    return "certificate";
+  if (lower.includes("invoice") || lower.includes("bill to") || lower.includes("amount due"))
+    return "invoice";
+  if (
+    lower.includes("resume") ||
+    lower.includes("curriculum vitae") ||
+    lower.includes("work experience") ||
+    lower.includes("education")
+  )
+    return "resume";
+  if (
+    lower.includes("contract") ||
+    lower.includes("agreement") ||
+    lower.includes("terms and conditions") ||
+    lower.includes("party a") ||
+    lower.includes("party b")
+  )
+    return "contract";
+  if (
+    lower.includes("report") ||
+    lower.includes("findings") ||
+    lower.includes("executive summary") ||
+    lower.includes("methodology")
+  )
+    return "report";
+  if (
+    lower.includes("research") ||
+    lower.includes("abstract") ||
+    lower.includes("hypothesis") ||
+    lower.includes("conclusion")
+  )
+    return "research paper";
+  if (lower.includes("manual") || lower.includes("instructions") || lower.includes("procedure"))
+    return "manual";
+  return "document";
+}
+
+function generateDocResponse(
+  query: string,
+  docs: UploadedDoc[]
+): { content: string; sources: Source[] } {
+  const queryLower = query.toLowerCase().replace(/[?!.]/g, "").trim();
+  const relevantSections = findRelevantSections(query, docs);
+  const allEntities = docs.reduce(
+    (acc, doc) => {
+      const e = extractKeyEntities(doc.text);
+      return {
+        names: [...acc.names, ...e.names],
+        dates: [...acc.dates, ...e.dates],
+        organizations: [...acc.organizations, ...e.organizations],
+        numbers: [...acc.numbers, ...e.numbers],
+        titles: [...acc.titles, ...e.titles],
+      };
+    },
+    {
+      names: [] as string[],
+      dates: [] as string[],
+      organizations: [] as string[],
+      numbers: [] as string[],
+      titles: [] as string[],
+    }
+  );
+
+  const docType = detectDocumentType(docs.map((d) => d.text).join("\n"));
+  const fileList = docs
+    .map(
+      (d) =>
+        `• **${d.name}** (${(d.size / 1024).toFixed(1)} KB, ~${d.text.split(/\s+/).length.toLocaleString()} words)`
+    )
+    .join("\n");
+
+  const sources: Source[] = relevantSections.slice(0, 3).map((s) => ({
     title: s.doc,
     page: null,
     content: s.text.slice(0, 200),
-    score: Math.min(0.99, 0.7 + s.relevance * 0.05),
+    score: Math.min(0.99, 0.7 + s.score * 0.03),
   }));
-
-  // Build a contextual response from the document content
-  const relevantText = sortedSentences.map((s) => s.text).join("\n\n");
-
-  const wordCount = docs.reduce((sum, d) => sum + d.text.split(/\s+/).length, 0);
-  const fileList = docs.map((d) => `• **${d.name}** (${(d.size / 1024).toFixed(1)} KB, ~${d.text.split(/\s+/).length.toLocaleString()} words)`).join("\n");
 
   let response = "";
 
-  if (relevantText.length > 50) {
-    response = `Based on your uploaded documents, here's what I found:\n\n${relevantText.split("\n\n").map((s, i) => `${i + 1}. ${s.trim()}`).join("\n\n")}\n\n---\n\n**Documents analyzed:**\n${fileList}\n\n*Ask me anything else about these documents — I can summarize sections, find specific details, compare information across files, or answer follow-up questions.*`;
+  if (queryLower.includes("what") || queryLower.includes("tell") || queryLower.includes("describe") || queryLower.includes("about")) {
+    const fullDocText = docs.map((d) => d.text).join("\n\n");
+    const firstChunk = fullDocText.slice(0, 3000);
+
+    if (relevantSections.length > 0) {
+      const sectionsText = relevantSections
+        .map((s, i) => `${i + 1}. **From ${s.doc}:**\n${s.text}`)
+        .join("\n\n");
+
+      response = `Based on your documents, here's what I found:\n\n${sectionsText}`;
+
+      if (allEntities.dates.length > 0) {
+        response += `\n\n**Dates mentioned:** ${allEntities.dates.slice(0, 5).join(", ")}`;
+      }
+      if (allEntities.organizations.length > 0) {
+        response += `\n**Organizations:** ${allEntities.organizations.slice(0, 5).join(", ")}`;
+      }
+      if (allEntities.names.length > 0) {
+        response += `\n**People:** ${allEntities.names.slice(0, 5).join(", ")}`;
+      }
+    } else {
+      const summary = firstChunk
+        .split(/[.!?\n]+/)
+        .filter((s) => s.trim().length > 20)
+        .slice(0, 6)
+        .map((s, i) => `${i + 1}. ${s.trim()}`)
+        .join("\n");
+
+      response = `Here's a summary of the document (${docType}):\n\n${summary || firstChunk.slice(0, 1000)}`;
+    }
+
+    response += `\n\n---\n\n**Documents analyzed:**\n${fileList}\n\n*Ask me anything more specific — I can extract names, dates, organizations, key points, or answer any question about these documents.*`;
+  } else if (queryLower.includes("who")) {
+    if (relevantSections.length > 0) {
+      const whoText = relevantSections
+        .map((s) => s.text)
+        .join("\n\n");
+      const nameMatches = whoText.match(
+        /(?:presented to|awarded to|certif[^.]*?that|name|recipient|winner|signed by|authorized by|issued to)\s*[:\-]?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,4})/gi
+      );
+      if (nameMatches && nameMatches.length > 0) {
+        response = `Here are the people mentioned in the documents:\n\n${nameMatches.map((m, i) => `${i + 1}. ${m}`).join("\n")}`;
+      } else if (allEntities.names.length > 0) {
+        response = `People mentioned in the documents:\n\n${allEntities.names.map((n, i) => `${i + 1}. ${n}`).join("\n")}`;
+      } else {
+        response = `From the document content:\n\n${relevantSections.map((s, i) => `${i + 1}. ${s.text.slice(0, 300)}`).join("\n\n")}`;
+      }
+    } else if (allEntities.names.length > 0) {
+      response = `People mentioned in the documents:\n\n${allEntities.names.map((n, i) => `${i + 1}. ${n}`).join("\n")}`;
+    } else {
+      response = `I couldn't find specific people mentioned in the documents. The documents may not contain named individuals, or the text extraction may have limitations. Try asking about the document content more generally.`;
+    }
+    response += `\n\n---\n**Source:** ${fileList}`;
+  } else if (queryLower.includes("when") || queryLower.includes("date") || queryLower.includes("time")) {
+    if (allEntities.dates.length > 0) {
+      response = `Dates found in the documents:\n\n${allEntities.dates.map((d, i) => `${i + 1}. ${d}`).join("\n")}`;
+      if (relevantSections.length > 0) {
+        response += `\n\n**Context:**\n${relevantSections
+          .slice(0, 3)
+          .map((s) => s.text.slice(0, 300))
+          .join("\n\n")}`;
+      }
+    } else {
+      response = `I couldn't find specific dates in the documents. The documents may contain dates in an unusual format, or dates may not be present.`;
+    }
+    response += `\n\n---\n**Source:** ${fileList}`;
+  } else if (queryLower.includes("where") || queryLower.includes("location") || queryLower.includes("place")) {
+    if (relevantSections.length > 0) {
+      response = `Location-related information from the documents:\n\n${relevantSections
+        .map((s, i) => `${i + 1}. ${s.text}`)
+        .join("\n\n")}`;
+    } else {
+      response = `I couldn't find specific location information in the documents.`;
+    }
+    response += `\n\n---\n**Source:** ${fileList}`;
+  } else if (queryLower.includes("summarize") || queryLower.includes("summary") || queryLower.includes("overview")) {
+    const fullText = docs.map((d) => d.text).join("\n\n");
+    const sentences = fullText
+      .split(/[.!?\n]+/)
+      .filter((s) => s.trim().length > 20);
+    const importantSentences = sentences.slice(0, 10);
+
+    response = `**Document Summary** (${docType})\n\n${importantSentences.map((s, i) => `${i + 1}. ${s.trim()}`).join("\n\n")}`;
+    if (allEntities.dates.length > 0) {
+      response += `\n\n**Key dates:** ${allEntities.dates.slice(0, 3).join(", ")}`;
+    }
+    if (allEntities.organizations.length > 0) {
+      response += `\n**Organizations:** ${allEntities.organizations.slice(0, 3).join(", ")}`;
+    }
+    response += `\n\n---\n**Source:** ${fileList}`;
+  } else if (relevantSections.length > 0) {
+    response = `Here's what I found related to your question:\n\n${relevantSections
+      .map((s, i) => `${i + 1}. **From ${s.doc}:**\n${s.text}`)
+      .join("\n\n")}`;
+    response += `\n\n---\n**Source:** ${fileList}`;
   } else {
-    response = `I've read your uploaded documents. Here's a summary:\n\n**Files loaded:**\n${fileList}\n\n**Total content:** ~${wordCount.toLocaleString()} words across ${docs.length} file${docs.length > 1 ? "s" : ""}\n\nI can help you with:\n- **Summarization** — "Summarize the key points from [file]"\n- **Specific questions** — "What does the document say about [topic]?"\n- **Comparison** — "Compare the findings in [file1] vs [file2]"\n- **Extraction** — "List all the action items mentioned"\n- **Analysis** — "What are the risks identified?"\n\nWhat would you like to know?`;
+    const fullText = docs.map((d) => d.text).join("\n");
+    const sentences = fullText
+      .split(/[.!?\n]+/)
+      .filter((s) => s.trim().length > 20)
+      .slice(0, 5);
+
+    if (sentences.length > 0) {
+      response = `I've read your documents (type: **${docType}**). Here are some key excerpts:\n\n${sentences.map((s, i) => `${i + 1}. ${s.trim()}`).join("\n\n")}`;
+    } else {
+      const wordCount = docs.reduce((s, d) => s + d.text.split(/\s+/).length, 0);
+      response = `I've loaded your documents (${wordCount.toLocaleString()} words total). I can answer questions about:\n\n• **Who** is involved — names, roles, parties\n• **What** happened — events, actions, descriptions\n• **When** — dates, timelines, deadlines\n• **Where** — locations, addresses, venues\n• **Key details** — amounts, percentages, specifications\n\nTry asking something like:\n- "What is this document about?"\n- "Who is mentioned in this document?"\n- "What are the key dates?"\n- "Summarize the main points"`;
+    }
+    response += `\n\n---\n**Source:** ${fileList}`;
   }
 
   return { content: response, sources };
 }
 
-function getDemoResponse(query: string, docs: UploadedDoc[]): { content: string; sources: Source[] } {
+function getDemoResponse(
+  query: string,
+  docs: UploadedDoc[]
+): { content: string; sources: Source[] } {
   if (docs.length > 0) {
     return generateDocResponse(query, docs);
   }
 
-  const lower = query.toLowerCase();
-  if (lower.includes("report") || lower.includes("finding") || lower.includes("summary")) {
-    return {
-      content: `Based on the analysis of the available data, here are the key findings:\n\n1. **Performance Metrics** — System uptime maintained at 99.97% over the past quarter, exceeding the SLA target of 99.9%.\n\n2. **Cost Optimization** — Infrastructure costs reduced by 23% through auto-scaling improvements and reserved instance utilization.\n\n3. **Security Posture** — Zero critical vulnerabilities detected. All dependencies updated to latest patched versions.\n\n4. **User Engagement** — Daily active users increased 18% month-over-month, with average session duration up 12%.\n\n**Recommendations:**\n- Continue monitoring the auto-scaling policies for peak hours\n- Schedule quarterly security audits\n- Expand the knowledge base with updated API documentation`,
-      sources: [
-        { title: "Q4 Operations Report", page: 1, content: "System uptime analysis and SLA compliance metrics...", score: 0.94 },
-        { title: "Infrastructure Audit", page: 3, content: "Cost optimization strategies and resource utilization...", score: 0.87 },
-      ],
-    };
-  }
-  if (lower.includes("api") || lower.includes("endpoint") || lower.includes("documentation")) {
-    return {
-      content: `Here's a summary of the available API documentation:\n\n**Base URL:** \`https://api.opspilot.ai/v1\`\n\n**Authentication:** Bearer token via \`Authorization\` header\n\n**Key Endpoints:**\n- \`POST /chat/stream\` — Streaming chat with RAG\n- \`GET /documents\` — List indexed documents\n- \`POST /documents/upload\` — Upload and index documents\n- \`GET /agents\` — List available agents\n- \`POST /evaluation\` — Run model evaluations\n\n**Rate Limits:**\n- Free tier: 100 requests/day\n- Pro tier: 10,000 requests/day\n- Enterprise: Unlimited`,
-      sources: [
-        { title: "OpsPilot API Reference", page: 1, content: "Complete API documentation with examples...", score: 0.96 },
-      ],
-    };
-  }
-  if (lower.includes("risk") || lower.includes("security") || lower.includes("vulnerability")) {
-    return {
-      content: `Here are the main risks identified in the current system:\n\n**High Priority:**\n1. **Single Point of Failure** — The vector database has no failover configuration. Recommend setting up replication.\n2. **API Key Exposure** — 3 API keys were found in environment files. Rotate immediately and implement secrets management.\n\n**Medium Priority:**\n3. **Dependency Vulnerabilities** — 2 packages have known CVEs. Schedule upgrades within 2 weeks.\n4. **Missing Rate Limiting** — The public API endpoints lack rate limiting, exposing the system to abuse.\n\n**Low Priority:**\n5. **Logging Gaps** — Authentication failures are not being logged. Add audit logging for compliance.\n\n**Mitigation Plan:** I recommend creating a security sprint to address high-priority items first, followed by a maintenance window for the medium-priority upgrades.`,
-      sources: [
-        { title: "Security Assessment", page: 2, content: "Vulnerability analysis and risk matrix...", score: 0.91 },
-        { title: "Architecture Review", page: 5, content: "Infrastructure resilience and failover analysis...", score: 0.85 },
-      ],
-    };
-  }
   return {
     content: `I'm OpsPilot AI, your enterprise operations assistant. I can help you with:\n\n- **Document Analysis** — Upload PDFs, DOCX, or text files and I'll answer questions based on their content\n- **Code Review** — Analyze code quality and suggest improvements\n- **Incident Triage** — Classify and route operational incidents\n- **API Research** — Find and recommend API integrations\n\n**Tip:** Click the **+** button below to upload a document, then ask me anything about it!`,
     sources: [],
@@ -206,9 +546,11 @@ export default function ChatPage() {
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [showUploadMenu, setShowUploadMenu] = useState(false);
+  const [showLimitBanner, setShowLimitBanner] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isAuthenticated } = useAuthStore();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -236,7 +578,6 @@ export default function ChatPage() {
         });
       } catch (err) {
         console.error(`Failed to parse ${file.name}:`, err);
-        // Still add the file with an error note
         newDocs.push({
           name: file.name,
           text: `[Error: Could not parse ${file.name}. The file may be corrupted or in an unsupported format.]`,
@@ -257,6 +598,14 @@ export default function ChatPage() {
   const sendMessage = async () => {
     if (!input.trim() || isStreaming) return;
 
+    if (!isAuthenticated) {
+      const count = incrementFreeMessageCount();
+      if (count > FREE_MESSAGE_LIMIT) {
+        setShowLimitBanner(true);
+        return;
+      }
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -276,115 +625,117 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, assistantMessage]);
 
     const token = localStorage.getItem("access_token");
+    const apiAvailable = !!token;
 
-    try {
-      const response = await fetch("/api/v1/chat/stream", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          conversation_id: conversationId,
-          document_context: uploadedDocs.length > 0
-            ? uploadedDocs.map((d) => `[${d.name}]\n${d.text.slice(0, 10000)}`).join("\n\n---\n\n")
-            : undefined,
-        }),
-      });
+    if (apiAvailable) {
+      try {
+        const response = await fetch("/api/v1/chat/stream", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            message: userMessage.content,
+            conversation_id: conversationId,
+          }),
+        });
 
-      if (!response.ok) throw new Error("Stream failed");
+        if (!response.ok) throw new Error("Stream failed");
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No reader");
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error("No reader");
 
-      const decoder = new TextDecoder();
-      let fullContent = "";
+        const decoder = new TextDecoder();
+        let fullContent = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n");
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            if (data === "[DONE]") continue;
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6);
+              if (data === "[DONE]") continue;
 
-            try {
-              const parsed = JSON.parse(data);
+              try {
+                const parsed = JSON.parse(data);
 
-              if (parsed.type === "content") {
-                fullContent += parsed.content;
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantMessage.id
-                      ? { ...m, content: fullContent }
-                      : m
-                  )
-                );
-              } else if (parsed.type === "sources") {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantMessage.id
-                      ? { ...m, sources: parsed.sources }
-                      : m
-                  )
-                );
-              } else if (parsed.type === "metadata") {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantMessage.id
-                      ? {
-                          ...m,
-                          latency_ms: parsed.latency_ms,
-                          token_count: parsed.token_count,
-                          model: parsed.model,
-                        }
-                      : m
-                  )
-                );
-              } else if (parsed.type === "conversation_id") {
-                setConversationId(parsed.conversation_id);
-              }
-            } catch {}
+                if (parsed.type === "content") {
+                  fullContent += parsed.content;
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantMessage.id
+                        ? { ...m, content: fullContent }
+                        : m
+                    )
+                  );
+                } else if (parsed.type === "sources") {
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantMessage.id
+                        ? { ...m, sources: parsed.sources }
+                        : m
+                    )
+                  );
+                } else if (parsed.type === "metadata") {
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantMessage.id
+                        ? {
+                            ...m,
+                            latency_ms: parsed.latency_ms,
+                            token_count: parsed.token_count,
+                            model: parsed.model,
+                          }
+                        : m
+                    )
+                  );
+                } else if (parsed.type === "conversation_id") {
+                  setConversationId(parsed.conversation_id);
+                }
+              } catch {}
+            }
           }
         }
-      }
-    } catch {
-      // Fallback to demo mode
-      const demo = getDemoResponse(userMessage.content, uploadedDocs);
-      const words = demo.content.split(" ");
-      let accumulated = "";
 
-      for (let i = 0; i < words.length; i++) {
-        accumulated += (i === 0 ? "" : " ") + words[i];
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantMessage.id
-              ? { ...m, content: accumulated }
-              : m
-          )
-        );
-        await new Promise((r) => setTimeout(r, 15));
+        setIsStreaming(false);
+        return;
+      } catch {
+        // Backend not available, fall through to client-side
       }
+    }
 
+    const demo = getDemoResponse(userMessage.content, uploadedDocs);
+    const words = demo.content.split(" ");
+    let accumulated = "";
+
+    for (let i = 0; i < words.length; i++) {
+      accumulated += (i === 0 ? "" : " ") + words[i];
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === assistantMessage.id
-            ? {
-                ...m,
-                sources: demo.sources,
-                latency_ms: Math.random() * 800 + 200,
-                token_count: words.length,
-                model: "gpt-4o (demo)",
-              }
-            : m
+          m.id === assistantMessage.id ? { ...m, content: accumulated } : m
         )
       );
+      await new Promise((r) => setTimeout(r, 12));
     }
+
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === assistantMessage.id
+          ? {
+              ...m,
+              sources: demo.sources,
+              latency_ms: Math.random() * 400 + 50,
+              token_count: words.length,
+              model: "client-side AI",
+            }
+          : m
+      )
+    );
 
     setIsStreaming(false);
   };
@@ -396,17 +747,21 @@ export default function ChatPage() {
     }
   };
 
-  const suggestedQuestions = uploadedDocs.length > 0
-    ? [
-        `Summarize ${uploadedDocs[0].name}`,
-        "What are the key points?",
-        "List all the action items",
-      ]
-    : [
-        "What are the key findings in the latest report?",
-        "Summarize the API documentation",
-        "What are the main risks identified?",
-      ];
+  const suggestedQuestions =
+    uploadedDocs.length > 0
+      ? [
+          `What is this ${detectDocumentType(uploadedDocs.map((d) => d.text).join("\n"))}?`,
+          "Who is mentioned in the document?",
+          "What are the key dates?",
+        ]
+      : [
+          "What are the key findings in the latest report?",
+          "Summarize the API documentation",
+          "What are the main risks identified?",
+        ];
+
+  const freeMessagesRemaining =
+    FREE_MESSAGE_LIMIT - getFreeMessageCount();
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
@@ -433,6 +788,58 @@ export default function ChatPage() {
         )}
       </div>
 
+      {/* Free usage banner */}
+      {!isAuthenticated && freeMessagesRemaining > 0 && freeMessagesRemaining <= 3 && (
+        <div className="mb-3 flex items-center gap-3 rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 px-4 py-2.5">
+          <Sparkles className="h-4 w-4 text-[#A78BFA]" />
+          <p className="text-xs text-[#A78BFA]">
+            You have {freeMessagesRemaining} free message{freeMessagesRemaining !== 1 ? "s" : ""} remaining.{" "}
+            <Link href="/login" className="font-medium underline hover:text-[#C4B5FD]">
+              Sign in for unlimited access
+            </Link>
+          </p>
+        </div>
+      )}
+
+      {/* Limit reached banner */}
+      <AnimatePresence>
+        {showLimitBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-3 rounded-xl border border-[#7C3AED]/30 bg-[#7C3AED]/10 p-4"
+          >
+            <div className="flex items-start gap-3">
+              <LogIn className="h-5 w-5 text-[#A78BFA] mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-white">
+                  Free message limit reached
+                </p>
+                <p className="mt-1 text-xs text-[#94A3B8]">
+                  You&apos;ve used all {FREE_MESSAGE_LIMIT} free messages. Sign
+                  in to continue chatting with unlimited access.
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <Link
+                    href="/login"
+                    className="rounded-lg bg-[#7C3AED] px-4 py-2 text-xs font-medium text-white hover:bg-[#6D28D9]"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="rounded-lg border border-[#7C3AED]/30 px-4 py-2 text-xs font-medium text-[#A78BFA] hover:bg-[#7C3AED]/10"
+                  >
+                    Create Account
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex flex-1 overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)]">
         <div className="flex flex-1 flex-col">
           <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
@@ -441,12 +848,14 @@ export default function ChatPage() {
                 <div className="mb-6 rounded-2xl bg-[#7C3AED]/10 p-4">
                   <Sparkles className="h-8 w-8 text-[#7C3AED]" />
                 </div>
-                <h2 className="mb-2 text-xl font-semibold">Ask OpsPilot AI</h2>
+                <h2 className="mb-2 text-xl font-semibold">
+                  Ask OpsPilot AI
+                </h2>
                 <p className="mb-4 max-w-md text-center text-sm text-[#94A3B8]">
-                  Upload documents and ask questions — I&apos;ll answer based on their content.
+                  Upload documents and ask questions — I&apos;ll answer based
+                  on their content.
                 </p>
 
-                {/* Upload prompt */}
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="mb-6 flex items-center gap-2 rounded-xl border border-dashed border-[#7C3AED]/40 bg-[#7C3AED]/5 px-5 py-3 text-sm text-[#A78BFA] transition-all hover:border-[#7C3AED]/60 hover:bg-[#7C3AED]/10"
@@ -479,7 +888,9 @@ export default function ChatPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className={`flex gap-4 ${
-                        message.role === "user" ? "justify-end" : "justify-start"
+                        message.role === "user"
+                          ? "justify-end"
+                          : "justify-start"
                       }`}
                     >
                       {message.role === "assistant" && (
@@ -500,57 +911,88 @@ export default function ChatPage() {
                               : "glass"
                           }`}
                         >
-                          {message.role === "assistant" && !message.content && isStreaming ? (
+                          {message.role === "assistant" &&
+                          !message.content &&
+                          isStreaming ? (
                             <div className="flex items-center gap-2 text-[#94A3B8]">
                               <Loader2 className="h-4 w-4 animate-spin" />
                               <span className="text-sm">Thinking...</span>
                             </div>
                           ) : (
                             <div className="prose prose-invert prose-sm max-w-none">
-                              <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                                {message.content}
-                              </p>
+                              <div
+                                className="whitespace-pre-wrap text-sm leading-relaxed"
+                                dangerouslySetInnerHTML={{
+                                  __html: message.content
+                                    .replace(
+                                      /\*\*(.*?)\*\*/g,
+                                      "<strong>$1</strong>"
+                                    )
+                                    .replace(
+                                      /\*(.*?)\*/g,
+                                      "<em>$1</em>"
+                                    )
+                                    .replace(
+                                      /`(.*?)`/g,
+                                      '<code class="rounded bg-white/5 px-1 py-0.5">$1</code>'
+                                    )
+                                    .replace(
+                                      /^• (.+)$/gm,
+                                      '<li class="ml-4 list-disc">$1</li>'
+                                    )
+                                    .replace(
+                                      /^(\d+)\. (.+)$/gm,
+                                      '<li class="ml-4 list-decimal">$2</li>'
+                                    ),
+                                }}
+                              />
                             </div>
                           )}
                         </div>
 
-                        {message.role === "assistant" && message.sources && message.sources.length > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-xs font-medium text-[#94A3B8]">Sources</p>
-                            <div className="flex flex-wrap gap-2">
-                              {message.sources.map((source, i) => (
-                                <div
-                                  key={i}
-                                  className="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1.5"
-                                >
-                                  <FileText className="h-3 w-3 text-[#7C3AED]" />
-                                  <span className="text-xs text-[#94A3B8]">
-                                    {source.title}
-                                    {source.page && ` (p.${source.page})`}
-                                  </span>
-                                  {source.score && (
-                                    <span className="rounded bg-[#7C3AED]/10 px-1 py-0.5 text-[10px] text-[#7C3AED]">
-                                      {Math.round(source.score * 100)}%
+                        {message.role === "assistant" &&
+                          message.sources &&
+                          message.sources.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-medium text-[#94A3B8]">
+                                Sources
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {message.sources.map((source, i) => (
+                                  <div
+                                    key={i}
+                                    className="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1.5"
+                                  >
+                                    <FileText className="h-3 w-3 text-[#7C3AED]" />
+                                    <span className="text-xs text-[#94A3B8]">
+                                      {source.title}
+                                      {source.page &&
+                                        ` (p.${source.page})`}
                                     </span>
-                                  )}
-                                </div>
-                              ))}
+                                    {source.score && (
+                                      <span className="rounded bg-[#7C3AED]/10 px-1 py-0.5 text-[10px] text-[#7C3AED]">
+                                        {Math.round(source.score * 100)}%
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        {message.role === "assistant" && message.latency_ms && (
-                          <div className="flex items-center gap-3 text-[10px] text-[#94A3B8]/60">
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {message.latency_ms.toFixed(0)}ms
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Zap className="h-3 w-3" />
-                              {message.model}
-                            </span>
-                          </div>
-                        )}
+                        {message.role === "assistant" &&
+                          message.latency_ms && (
+                            <div className="flex items-center gap-3 text-[10px] text-[#94A3B8]/60">
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {message.latency_ms.toFixed(0)}ms
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Zap className="h-3 w-3" />
+                                {message.model}
+                              </span>
+                            </div>
+                          )}
                       </div>
 
                       {message.role === "user" && (
@@ -566,9 +1008,7 @@ export default function ChatPage() {
             )}
           </div>
 
-          {/* Input Area */}
           <div className="border-t border-[rgba(255,255,255,0.08)] p-4">
-            {/* Uploaded docs chips */}
             {uploadedDocs.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2">
                 {uploadedDocs.map((doc, i) => (
@@ -579,8 +1019,12 @@ export default function ChatPage() {
                     className="flex items-center gap-1.5 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/10 px-2.5 py-1.5"
                   >
                     <FileText className="h-3 w-3 text-[#A78BFA]" />
-                    <span className="max-w-[150px] truncate text-xs text-[#A78BFA]">{doc.name}</span>
-                    <span className="text-[10px] text-[#475569]">{(doc.size / 1024).toFixed(0)}KB</span>
+                    <span className="max-w-[150px] truncate text-xs text-[#A78BFA]">
+                      {doc.name}
+                    </span>
+                    <span className="text-[10px] text-[#475569]">
+                      {(doc.size / 1024).toFixed(0)}KB
+                    </span>
                     <button
                       onClick={() => removeDoc(i)}
                       className="rounded p-0.5 text-[#475569] hover:text-[#EF4444]"
@@ -593,7 +1037,6 @@ export default function ChatPage() {
             )}
 
             <div className="flex items-end gap-3">
-              {/* Upload button */}
               <div className="relative">
                 <button
                   onClick={() => setShowUploadMenu(!showUploadMenu)}
@@ -651,17 +1094,19 @@ export default function ChatPage() {
                     : "Ask a question..."
                 }
                 rows={1}
-                className="flex-1 resize-none rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-4 py-3 text-sm text-white placeholder-[#94A3B8]/50 outline-none transition-all focus:border-[#7C3AED]/50 focus:ring-1 focus:ring-[#7C3AED]/50"
+                disabled={showLimitBanner}
+                className="flex-1 resize-none rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-4 py-3 text-sm text-white placeholder-[#94A3B8]/50 outline-none transition-all focus:border-[#7C3AED]/50 focus:ring-1 focus:ring-[#7C3AED]/50 disabled:opacity-50"
                 style={{ minHeight: "44px", maxHeight: "120px" }}
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
                   target.style.height = "auto";
-                  target.style.height = Math.min(target.scrollHeight, 120) + "px";
+                  target.style.height =
+                    Math.min(target.scrollHeight, 120) + "px";
                 }}
               />
               <button
                 onClick={sendMessage}
-                disabled={!input.trim() || isStreaming}
+                disabled={!input.trim() || isStreaming || showLimitBanner}
                 className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#7C3AED] text-white transition-all hover:bg-[#7C3AED]/90 disabled:opacity-50"
               >
                 {isStreaming ? (

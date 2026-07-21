@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = Field(default="")
     OPENAI_MODEL: str = Field(default="gpt-4o")
 
-    CORS_ORIGINS: list[str] = Field(default=["http://localhost:3000", "http://localhost:3001"])
+    CORS_ORIGINS: list[str] = Field(default=["http://localhost:3000", "http://localhost:3001", "https://frontend-seven-wine-no2sbj0g1l.vercel.app", "https://frontend-pdjz3fuwo-usmani11.vercel.app"])
 
     MAX_UPLOAD_SIZE_MB: int = Field(default=50)
     RATE_LIMIT_PER_MINUTE: int = Field(default=60)

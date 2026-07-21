@@ -64,7 +64,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5433/opspilot_test
           REDIS_URL: redis://localhost:6379/0
           JWT_SECRET_KEY: test-secret-key-for-ci
-          OPENAI_API_KEY: sk-test
+          OPENAI_API_KEY: test-key-not-real
         run: pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage

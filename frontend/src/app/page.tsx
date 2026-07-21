@@ -13,7 +13,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace("/dashboard");
+      router.replace("/chat");
     }
   }, [isAuthenticated, router]);
 

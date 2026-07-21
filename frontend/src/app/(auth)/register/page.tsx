@@ -48,7 +48,7 @@ export default function RegisterPage() {
             const user = await meRes.json();
             setUser(user);
           }
-          router.push("/dashboard");
+          router.push("/chat");
           return;
         }
       }
@@ -67,7 +67,7 @@ export default function RegisterPage() {
         is_active: true,
         created_at: new Date().toISOString(),
       });
-      router.push("/dashboard");
+      router.push("/chat");
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +83,7 @@ export default function RegisterPage() {
       if (res.ok) {
         const data = await res.json();
         setTokens(data.access_token, data.refresh_token);
-        router.push("/dashboard");
+        router.push("/chat");
         return;
       }
     } catch {
@@ -99,7 +99,7 @@ export default function RegisterPage() {
       is_active: true,
       created_at: new Date().toISOString(),
     });
-    router.push("/dashboard");
+    router.push("/chat");
   };
 
   return (

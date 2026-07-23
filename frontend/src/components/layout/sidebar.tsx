@@ -89,7 +89,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               {isActive && (
                 <motion.div
                   layoutId="activeIndicator"
-                  className="ml-auto h-1.5 w-1.5 rounded-full bg-[#DC2626]"
+                  className="ml-auto h-1.5 w-1.5 rounded-full bg-[#DC2626] shadow-[0_0_8px_2px_rgba(220,38,38,0.6)]"
                 />
               )}
             </Link>

@@ -6,6 +6,16 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
+import dynamic from "next/dynamic";
+
+const LoginHero3D = dynamic(
+  () => import("@/components/shared/login-hero-3d").then((m) => m.LoginHero3D),
+  { ssr: false }
+);
+const TiltCard = dynamic(
+  () => import("@/components/shared/login-hero-3d").then((m) => m.TiltCard),
+  { ssr: false }
+);
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -104,17 +114,9 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#050810] px-4">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#DC2626]/[0.04] blur-[120px]" />
-        <div className="absolute left-1/4 top-1/3 h-[300px] w-[300px] rounded-full bg-[#2563EB]/[0.03] blur-[100px]" />
-      </div>
+      <LoginHero3D />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-md"
-      >
+      <TiltCard className="relative z-10 w-full max-w-md">
         <div className="glass rounded-2xl p-8">
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#DC2626] to-[#2563EB] shadow-lg shadow-[#DC2626]/20">
@@ -251,7 +253,7 @@ export default function RegisterPage() {
             </Link>
           </p>
         </div>
-      </motion.div>
+      </TiltCard>
     </div>
   );
 }

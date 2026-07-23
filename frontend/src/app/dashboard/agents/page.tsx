@@ -3,6 +3,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Bot, Activity, Zap, Clock, RefreshCw, Play, CheckCircle, AlertCircle, Loader2, Cpu, GitBranch } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const Pipeline3DDynamic = dynamic(
+  () => import("@/components/agents/pipeline-3d").then((m) => m.Pipeline3D),
+  { ssr: false }
+);
 
 interface Agent {
   name: string;
@@ -71,6 +77,8 @@ export default function AgentsPage() {
   const [running, setRunning] = useState(false);
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [runLogs, setRunLogs] = useState<{ agent: string; status: string; time: string }[]>([]);
+  const [pipelineRunning, setPipelineRunning] = useState(-1);
+  const [pipelineCompleted, setPipelineCompleted] = useState<number[]>([]);
 
   const totalRuns = AGENTS.reduce((sum, a) => sum + a.total_runs, 0);
   const avgSuccess = AGENTS.reduce((sum, a) => sum + a.success_rate, 0) / AGENTS.length;
@@ -80,15 +88,19 @@ export default function AgentsPage() {
     setRunning(true);
     setRunLogs([]);
     setActiveTab("graph");
+    setPipelineRunning(0);
+    setPipelineCompleted([]);
 
     const agentOrder = ["planner", "retriever", "document_qa", "reasoning", "citation", "evaluator"];
     const agentNames = ["Planner", "Retriever", "Document QA", "Reasoning", "Citation", "Evaluator"];
 
     for (let i = 0; i < agentOrder.length; i++) {
       setActiveNode(agentOrder[i]);
+      setPipelineRunning(i);
       setRunLogs((prev) => [...prev, { agent: agentNames[i], status: "running", time: "" }]);
       await new Promise((r) => setTimeout(r, 600 + Math.random() * 400));
 
+      setPipelineCompleted((prev) => [...prev, i]);
       setRunLogs((prev) =>
         prev.map((log, idx) =>
           idx === i
@@ -98,6 +110,7 @@ export default function AgentsPage() {
       );
     }
 
+    setPipelineRunning(-1);
     setActiveNode(null);
     setRunning(false);
   };
@@ -184,101 +197,12 @@ export default function AgentsPage() {
                 </div>
               </div>
 
-              <div className="flex justify-center overflow-x-auto">
-                <svg width="500" height="680" viewBox="0 0 500 680">
-                  <defs>
-                    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                      <polygon points="0 0, 10 3.5, 0 7" fill="#DC2626" fillOpacity="0.5" />
-                    </marker>
-                    <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#DC2626" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="#2563EB" stopOpacity="0.3" />
-                    </linearGradient>
-                  </defs>
-
-                  {WORKFLOW_EDGES.map((edge, i) => {
-                    const from = WORKFLOW_NODES.find((n) => n.id === edge.from)!;
-                    const to = WORKFLOW_NODES.find((n) => n.id === edge.to)!;
-                    const fromDone = runLogs.some((l) => l.status === "completed" && l.agent.toLowerCase().replace(" ", "_") === edge.from);
-                    const toRunning = activeNode === edge.to;
-                    const edgeActive = fromDone && (toRunning || runLogs.some((l) => l.status === "completed" && l.agent.toLowerCase().replace(" ", "_") === edge.to));
-                    return (
-                      <g key={i}>
-                        <line
-                          x1={from.x} y1={from.y + 45}
-                          x2={to.x} y2={to.y}
-                          stroke={edgeActive ? "#DC2626" : "url(#edgeGrad)"}
-                          strokeWidth={edgeActive ? 2.5 : 2}
-                          strokeOpacity={edgeActive ? 0.8 : 1}
-                          markerEnd="url(#arrow)"
-                        />
-                        {edgeActive && (
-                          <circle r="3" fill="#DC2626">
-                            <animateMotion
-                              dur="0.8s"
-                              repeatCount="indefinite"
-                              path={`M${from.x},${from.y + 45} L${to.x},${to.y}`}
-                            />
-                          </circle>
-                        )}
-                        <text x={(from.x + to.x) / 2 + 12} y={(from.y + 45 + to.y) / 2} fill="#475569" fontSize="9" fontFamily="Inter">
-                          {edge.label}
-                        </text>
-                      </g>
-                    );
-                  })}
-
-                  {WORKFLOW_NODES.map((node) => {
-                    const agent = AGENTS.find((a) => a.name.toLowerCase().replace(" ", "_") === node.id);
-                    const isSelected = selectedAgent === node.id;
-                    const isRunning = activeNode === node.id;
-                    const isDone = runLogs.some((l) => l.status === "completed" && l.agent.toLowerCase().replace(" ", "_") === node.id);
-                    return (
-                      <g
-                        key={node.id}
-                        onClick={() => setSelectedAgent(isSelected ? null : node.id)}
-                        className="cursor-pointer"
-                      >
-                        {isRunning && (
-                          <rect
-                            x={node.x - 95} y={node.y - 5}
-                            width={190} height={55}
-                            rx={14}
-                            fill="none"
-                            stroke={node.color}
-                            strokeWidth="2"
-                            strokeOpacity="0.6"
-                          >
-                            <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="1s" repeatCount="indefinite" />
-                          </rect>
-                        )}
-                        <rect
-                          x={node.x - 90} y={node.y}
-                          width={180} height={45}
-                          rx={12}
-                          fill={isDone ? node.color + "25" : node.color + "15"}
-                          stroke={isRunning ? node.color : isSelected ? node.color + "80" : node.color + "40"}
-                          strokeWidth={isRunning ? 2 : isSelected ? 2 : 1}
-                        />
-                        <circle cx={node.x - 70} cy={node.y + 14} r={4} fill={
-                          isRunning ? "#F59E0B" : isDone ? "#10B981" : agent?.status === "active" ? "#10B981" : "#94A3B8"
-                        } />
-                        {isRunning && (
-                          <circle cx={node.x - 70} cy={node.y + 14} r={4} fill="#F59E0B">
-                            <animate attributeName="r" values="4;6;4" dur="0.8s" repeatCount="indefinite" />
-                            <animate attributeName="opacity" values="1;0.4;1" dur="0.8s" repeatCount="indefinite" />
-                          </circle>
-                        )}
-                        <text x={node.x - 58} y={node.y + 18} fill="white" fontSize="11" fontWeight="600" fontFamily="Inter">
-                          {node.name}
-                        </text>
-                        <text x={node.x - 70} y={node.y + 35} fill="#475569" fontSize="9" fontFamily="Inter">
-                          {node.tools} tools · {isRunning ? "running..." : isDone ? "done" : `${agent?.total_runs || 0} runs`}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </svg>
+              <div className="flex justify-center overflow-hidden">
+                <Pipeline3DDynamic
+                  onNodeClick={(agentId) => setSelectedAgent(agentId)}
+                  runningAgentIndex={pipelineRunning}
+                  completedAgents={pipelineCompleted}
+                />
               </div>
             </div>
           </div>

@@ -3,6 +3,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Network, Search, RotateCcw, ZoomIn, ZoomOut, Info, Layers, Brain } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const Scatter3DDynamic = dynamic(
+  () => import("@/components/embeddings/scatter-3d").then((m) => m.Scatter3D),
+  { ssr: false }
+);
 
 interface Point {
   x: number;
@@ -62,7 +68,6 @@ function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 export default function EmbeddingsPage() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [points, setPoints] = useState<Point[]>([]);
   const [zoom, setZoom] = useState(1);
   const [searchTerm, setSearchTerm] = useState(false);
@@ -71,114 +76,9 @@ export default function EmbeddingsPage() {
   const [selectedModel, setSelectedModel] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
 
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
-
-    ctx.fillStyle = "rgba(255,255,255,0.01)";
-    ctx.fillRect(0, 0, w, h);
-
-    // Grid
-    for (let i = 0; i <= 10; i++) {
-      ctx.strokeStyle = "rgba(255,255,255,0.025)";
-      ctx.beginPath();
-      ctx.moveTo((w / 10) * i, 0);
-      ctx.lineTo((w / 10) * i, h);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(0, (h / 10) * i);
-      ctx.lineTo(w, (h / 10) * i);
-      ctx.stroke();
-    }
-
-    // Draw connections between nearby points of same cluster
-    const filteredPoints = points.filter(
-      (p) => selectedCluster === null || selectedCluster === p.cluster
-    );
-
-    for (let i = 0; i < filteredPoints.length; i++) {
-      for (let j = i + 1; j < filteredPoints.length; j++) {
-        const a = filteredPoints[i];
-        const b = filteredPoints[j];
-        if (a.cluster !== b.cluster) continue;
-        const dist = Math.hypot(a.x - b.x, a.y - b.y);
-        if (dist < 0.08) {
-          const px1 = a.x * w * zoom;
-          const py1 = a.y * h * zoom;
-          const px2 = b.x * w * zoom;
-          const py2 = b.y * h * zoom;
-          ctx.strokeStyle = CLUSTER_COLORS[a.cluster] + "15";
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(px1, py1);
-          ctx.lineTo(px2, py2);
-          ctx.stroke();
-        }
-      }
-    }
-
-    // Draw points
-    points.forEach((p) => {
-      const px = p.x * w * zoom;
-      const py = p.y * h * zoom;
-      if (px < -30 || px > w + 30 || py < -30 || py > h + 30) return;
-
-      const color = CLUSTER_COLORS[p.cluster];
-      const isHighlighted = selectedCluster === null || selectedCluster === p.cluster;
-      const alpha = isHighlighted ? 0.85 : 0.12;
-      const radius = isHighlighted ? 5 * zoom : 2.5 * zoom;
-
-      // Glow
-      if (isHighlighted) {
-        ctx.beginPath();
-        ctx.arc(px, py, radius + 6, 0, Math.PI * 2);
-        const gradient = ctx.createRadialGradient(px, py, radius, px, py, radius + 6);
-        gradient.addColorStop(0, color + "30");
-        gradient.addColorStop(1, color + "00");
-        ctx.fillStyle = gradient;
-        ctx.fill();
-      }
-
-      // Point
-      ctx.beginPath();
-      ctx.arc(px, py, radius, 0, Math.PI * 2);
-      ctx.fillStyle = color + Math.round(alpha * 255).toString(16).padStart(2, "0");
-      ctx.fill();
-
-      // Border
-      if (isHighlighted) {
-        ctx.beginPath();
-        ctx.arc(px, py, radius + 2, 0, Math.PI * 2);
-        ctx.strokeStyle = color + "40";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    });
-  }, [points, zoom, selectedCluster]);
-
   useEffect(() => {
     setPoints(generatePoints(250));
   }, []);
-
-  useEffect(() => {
-    draw();
-  }, [draw]);
-
-  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) / (canvas.width * zoom);
-    const my = (e.clientY - rect.top) / (canvas.height * zoom);
-    const closest = points.find((p) => Math.hypot(p.x - mx, p.y - my) < 0.025);
-    setHoveredPoint(closest || null);
-  };
 
   const clusterCounts = CLUSTER_NAMES.map(
     (_, i) => points.filter((p) => p.cluster === i).length
@@ -236,13 +136,21 @@ export default function EmbeddingsPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <div className="lg:col-span-3">
-          <div className="relative rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 overflow-hidden backdrop-blur-xl">
-            <canvas
-              ref={canvasRef}
-              width={900}
-              height={550}
-              className="w-full cursor-crosshair"
-              onMouseMove={handleCanvasMouseMove}
+          <div className="relative rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 overflow-hidden backdrop-blur-xl" style={{ height: 550 }}>
+            <Scatter3DDynamic
+              onHoverPoint={(info) => {
+                if (info) {
+                  setHoveredPoint({
+                    x: 0.5,
+                    y: 0.5,
+                    label: info.label,
+                    cluster: CLUSTER_NAMES.indexOf(info.cluster as typeof CLUSTER_NAMES[number]),
+                    dimension: 0,
+                  });
+                } else {
+                  setHoveredPoint(null);
+                }
+              }}
             />
             {hoveredPoint && (
               <div className="absolute left-4 top-4 rounded-xl border border-white/[0.08] bg-[#0A0F1E]/90 px-4 py-3 backdrop-blur-sm">
@@ -252,8 +160,7 @@ export default function EmbeddingsPage() {
               </div>
             )}
             <div className="absolute bottom-4 left-4 flex items-center gap-3 text-[10px] text-[#94A3B8]">
-              <span>{points.length} documents</span>
-              <span>Zoom: {(zoom * 100).toFixed(0)}%</span>
+              <span>250 documents</span>
               <span>{EMBEDDING_MODELS[selectedModel].name}</span>
             </div>
           </div>

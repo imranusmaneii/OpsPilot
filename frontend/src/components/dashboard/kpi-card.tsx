@@ -2,6 +2,12 @@
 
 import { motion } from "framer-motion";
 import { type LucideIcon } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const CardTilt = dynamic(
+  () => import("@/components/shared/card-tilt").then((m) => m.CardTilt),
+  { ssr: false }
+);
 
 interface KpiCardProps {
   title: string;
@@ -12,13 +18,8 @@ interface KpiCardProps {
 }
 
 export function KpiCard({ title, value, change, icon: Icon, color }: KpiCardProps) {
-  const isPositive = change.startsWith("+") || change.startsWith("-");
-
   return (
-    <motion.div
-      whileHover={{ y: -2, transition: { duration: 0.2 } }}
-      className="glass glass-hover group cursor-pointer rounded-2xl p-5 transition-all"
-    >
+    <CardTilt className="glass glass-hover group cursor-pointer rounded-2xl p-5 transition-all">
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <p className="text-sm text-[#94A3B8]">{title}</p>
@@ -45,6 +46,6 @@ export function KpiCard({ title, value, change, icon: Icon, color }: KpiCardProp
           <Icon className="h-5 w-5" />
         </div>
       </div>
-    </motion.div>
+    </CardTilt>
   );
 }

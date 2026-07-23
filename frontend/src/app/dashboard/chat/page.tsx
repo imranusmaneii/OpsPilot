@@ -17,6 +17,12 @@ import {
   Upload,
 } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const ChatSparkle3DDynamic = dynamic(
+  () => import("@/components/shared/chat-sparkle-3d").then((m) => m.ChatSparkle3D),
+  { ssr: false }
+);
 
 interface Message {
   id: string;
@@ -772,8 +778,8 @@ export default function ChatPage() {
           <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center">
-                <div className="mb-6 rounded-2xl bg-[#DC2626]/10 p-4">
-                  <Sparkles className="h-8 w-8 text-[#DC2626]" />
+                <div className="mb-6">
+                  <ChatSparkle3DDynamic size={96} />
                 </div>
                 <h2 className="mb-2 text-xl font-semibold">
                   Ask OpsPilot AI

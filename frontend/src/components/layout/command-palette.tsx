@@ -88,10 +88,11 @@ export function CommandPalette() {
             onClick={() => setOpen(false)}
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            transition={{ duration: 0.15 }}
+            initial={{ opacity: 0, scale: 0.95, y: -20, rotateX: -8 }}
+            animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -20, rotateX: -8 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{ perspective: 800 }}
             className="fixed left-1/2 top-[20%] z-[100] w-full max-w-lg -translate-x-1/2"
           >
             <div className="rounded-2xl border border-white/[0.08] bg-[#0A0F1E] p-2 shadow-2xl backdrop-blur-xl">

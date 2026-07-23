@@ -68,9 +68,9 @@ export default function PlaygroundPage() {
           <button
             key={t.id}
             onClick={() => { setSystemPrompt(t.system); setUserPrompt(t.prompt); }}
-            className="rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-[#7C3AED]/30 hover:bg-white/[0.08]"
+            className="rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-[#DC2626]/30 hover:bg-white/[0.08]"
           >
-            <BookOpen className="mb-2 h-4 w-4 text-[#7C3AED]" />
+            <BookOpen className="mb-2 h-4 w-4 text-[#DC2626]" />
             <div className="text-sm font-medium">{t.name}</div>
           </button>
         ))}
@@ -85,7 +85,7 @@ export default function PlaygroundPage() {
               onChange={(e) => setSystemPrompt(e.target.value)}
               placeholder="You are a helpful assistant..."
               rows={4}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-[#94A3B8] outline-none focus:border-[#7C3AED]/50"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-[#94A3B8] outline-none focus:border-[#DC2626]/50"
             />
           </div>
           <div>
@@ -95,7 +95,7 @@ export default function PlaygroundPage() {
               onChange={(e) => setUserPrompt(e.target.value)}
               placeholder="Enter your prompt here..."
               rows={6}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-[#94A3B8] outline-none focus:border-[#7C3AED]/50"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-[#94A3B8] outline-none focus:border-[#DC2626]/50"
             />
           </div>
           <div className="flex items-center gap-4">
@@ -115,13 +115,13 @@ export default function PlaygroundPage() {
                 step="0.1"
                 value={temperature}
                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                className="w-24 accent-[#7C3AED]"
+                className="w-24 accent-[#DC2626]"
               />
             </div>
             <button
               onClick={handleRun}
               disabled={loading || !userPrompt}
-              className="ml-auto flex items-center gap-2 rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#7C3AED]/90 disabled:opacity-50"
+              className="ml-auto flex items-center gap-2 rounded-xl bg-[#DC2626] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#DC2626]/90 disabled:opacity-50"
             >
               <Play className={`h-4 w-4 ${loading ? "animate-pulse" : ""}`} />
               {loading ? "Running..." : "Run"}
@@ -144,7 +144,7 @@ export default function PlaygroundPage() {
           <div className="min-h-[300px] rounded-xl border border-white/10 bg-white/5 p-4 text-sm">
             {loading ? (
               <div className="flex h-full items-center justify-center">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#7C3AED] border-t-transparent" />
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#DC2626] border-t-transparent" />
               </div>
             ) : output ? (
               <p className="whitespace-pre-wrap">{output}</p>
@@ -180,7 +180,7 @@ export default function PlaygroundPage() {
                 className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs"
               >
                 <span className="text-[#94A3B8]">{h.time}</span>
-                <span className="rounded-lg bg-[#7C3AED]/15 px-2 py-0.5 text-[#7C3AED]">{h.model}</span>
+                <span className="rounded-lg bg-[#DC2626]/15 px-2 py-0.5 text-[#DC2626]">{h.model}</span>
                 <span className="truncate text-white/60">{h.prompt}</span>
               </motion.div>
             ))}

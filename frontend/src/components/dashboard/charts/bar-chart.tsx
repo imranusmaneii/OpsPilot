@@ -25,7 +25,7 @@ export function BarChart({ data, height = 200, color: defaultColor, showLabels =
       <div className="flex items-end gap-2" style={{ height }}>
         {data.map((item, i) => {
           const barHeight = (item.value / maxValue) * 100;
-          const color = item.color || defaultColor || "#7C3AED";
+          const color = item.color || defaultColor || "#DC2626";
 
           return (
             <div key={i} className="flex flex-1 flex-col items-center gap-1">

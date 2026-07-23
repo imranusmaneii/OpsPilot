@@ -113,7 +113,7 @@ export default function EvaluationPage() {
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#7C3AED]/90"
+            className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#DC2626]/90"
           >
             <Plus className="h-4 w-4" />
             New Evaluation
@@ -244,7 +244,7 @@ export default function EvaluationPage() {
                   <button
                     onClick={() => handleRun(ev.id)}
                     disabled={runningId === ev.id}
-                    className="flex items-center gap-1.5 rounded-lg bg-[#7C3AED]/15 px-3 py-1.5 text-xs text-[#7C3AED] hover:bg-[#7C3AED]/25 disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-lg bg-[#DC2626]/15 px-3 py-1.5 text-xs text-[#DC2626] hover:bg-[#DC2626]/25 disabled:opacity-50"
                   >
                     <Play className="h-3 w-3" />
                     Run
@@ -273,7 +273,7 @@ export default function EvaluationPage() {
                     value={newEvalName}
                     onChange={(e) => setNewEvalName(e.target.value)}
                     placeholder="My Evaluation"
-                    className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-4 py-3 text-sm text-white placeholder-[#94A3B8]/50 outline-none focus:border-[#7C3AED]/50"
+                    className="w-full rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-4 py-3 text-sm text-white placeholder-[#94A3B8]/50 outline-none focus:border-[#DC2626]/50"
                   />
                 </div>
                 <p className="text-xs text-[#94A3B8]">
@@ -286,7 +286,7 @@ export default function EvaluationPage() {
                   <button
                     type="submit"
                     disabled={isCreating}
-                    className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#7C3AED]/90 disabled:opacity-50"
+                    className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#DC2626]/90 disabled:opacity-50"
                   >
                     {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
                     Create & Run

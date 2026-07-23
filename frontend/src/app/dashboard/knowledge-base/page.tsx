@@ -154,7 +154,7 @@ export default function KnowledgeBasePage() {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#7C3AED]/90"
+          className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#DC2626]/90"
         >
           <Plus className="h-4 w-4" />
           New Collection
@@ -189,12 +189,12 @@ export default function KnowledgeBasePage() {
             onClick={() => inputRef.current?.click()}
             className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all ${
               isDragging
-                ? "border-[#7C3AED] bg-[#7C3AED]/10"
-                : "border-white/[0.1] bg-white/[0.02] hover:border-[#7C3AED]/50 hover:bg-white/[0.04]"
+                ? "border-[#DC2626] bg-[#DC2626]/10"
+                : "border-white/[0.1] bg-white/[0.02] hover:border-[#DC2626]/50 hover:bg-white/[0.04]"
             }`}
           >
-            <div className="mb-4 rounded-2xl bg-[#7C3AED]/10 p-4">
-              <Upload className="h-8 w-8 text-[#7C3AED]" />
+            <div className="mb-4 rounded-2xl bg-[#DC2626]/10 p-4">
+              <Upload className="h-8 w-8 text-[#DC2626]" />
             </div>
             <p className="mb-1 text-sm font-medium text-white">
               {isDragging ? "Drop files here" : "Drag & drop files here"}
@@ -233,7 +233,7 @@ export default function KnowledgeBasePage() {
                             ? "bg-emerald-400"
                             : f.status === "error"
                             ? "bg-red-400"
-                            : "bg-[#7C3AED]"
+                            : "bg-[#DC2626]"
                         }`}
                         style={{ width: `${f.progress}%` }}
                       />
@@ -265,7 +265,7 @@ export default function KnowledgeBasePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search collections..."
-              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-2.5 pl-10 pr-4 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#7C3AED]/40"
+              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-2.5 pl-10 pr-4 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#DC2626]/40"
             />
           </div>
 
@@ -290,8 +290,8 @@ export default function KnowledgeBasePage() {
                   className="group cursor-pointer rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-5 backdrop-blur-xl transition-all hover:border-white/[0.1] hover:bg-white/[0.04]"
                 >
                   <div className="mb-4 flex items-start justify-between">
-                    <div className="rounded-xl bg-[#7C3AED]/10 p-2.5">
-                      <Folder className="h-5 w-5 text-[#7C3AED]" />
+                    <div className="rounded-xl bg-[#DC2626]/10 p-2.5">
+                      <Folder className="h-5 w-5 text-[#DC2626]" />
                     </div>
                     <button
                       onClick={(e) => {
@@ -344,7 +344,7 @@ export default function KnowledgeBasePage() {
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
                       placeholder="My Collection"
-                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white placeholder-[#94A3B8]/50 outline-none focus:border-[#7C3AED]/50"
+                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white placeholder-[#94A3B8]/50 outline-none focus:border-[#DC2626]/50"
                       required
                     />
                   </div>
@@ -355,7 +355,7 @@ export default function KnowledgeBasePage() {
                       onChange={(e) => setNewDescription(e.target.value)}
                       placeholder="Optional description"
                       rows={3}
-                      className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white placeholder-[#94A3B8]/50 outline-none focus:border-[#7C3AED]/50"
+                      className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white placeholder-[#94A3B8]/50 outline-none focus:border-[#DC2626]/50"
                     />
                   </div>
                   <div className="flex justify-end gap-3">
@@ -369,7 +369,7 @@ export default function KnowledgeBasePage() {
                     <button
                       type="submit"
                       disabled={isCreating}
-                      className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#7C3AED]/90 disabled:opacity-50"
+                      className="rounded-xl bg-[#DC2626] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#DC2626]/90 disabled:opacity-50"
                     >
                       {isCreating ? "Creating..." : "Create"}
                     </button>

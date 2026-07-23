@@ -167,7 +167,7 @@ export default function DashboardPage() {
             <h3 className="text-lg font-semibold">Response Latency</h3>
             <div className="flex items-center gap-3 text-xs text-[#94A3B8]">
               <span className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-[#7C3AED]" /> P50
+                <span className="h-2 w-2 rounded-full bg-[#DC2626]" /> P50
               </span>
               <span className="flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-[#2563EB]" /> P90

@@ -34,8 +34,8 @@ export function CollectionGrid({ collections, onSelect, onDelete }: CollectionGr
           className="glass glass-hover group cursor-pointer rounded-2xl p-5 transition-all"
         >
           <div className="mb-4 flex items-start justify-between">
-            <div className="rounded-xl bg-[#7C3AED]/10 p-2.5">
-              <Database className="h-5 w-5 text-[#7C3AED]" />
+            <div className="rounded-xl bg-[#DC2626]/10 p-2.5">
+              <Database className="h-5 w-5 text-[#DC2626]" />
             </div>
             <button
               onClick={(e) => {

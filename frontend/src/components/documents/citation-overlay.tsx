@@ -29,7 +29,7 @@ export function CitationOverlay({ citations }: CitationOverlayProps) {
           className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3"
         >
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-medium text-[#7C3AED]">
+            <span className="text-xs font-medium text-[#DC2626]">
               {citation.document_title}
               {citation.page_number && ` (p. ${citation.page_number})`}
             </span>

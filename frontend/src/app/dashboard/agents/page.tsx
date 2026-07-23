@@ -45,7 +45,7 @@ const DEMO_RUNS: AgentRun[] = [
 ];
 
 const WORKFLOW_NODES = [
-  { id: "planner", name: "Planner", x: 250, y: 40, color: "#7C3AED", tools: 2 },
+  { id: "planner", name: "Planner", x: 250, y: 40, color: "#DC2626", tools: 2 },
   { id: "retriever", name: "Retriever", x: 250, y: 150, color: "#2563EB", tools: 3 },
   { id: "document_qa", name: "Document QA", x: 250, y: 260, color: "#06B6D4", tools: 3 },
   { id: "api_agent", name: "API Agent", x: 420, y: 260, color: "#F59E0B", tools: 2 },
@@ -112,7 +112,7 @@ export default function AgentsPage() {
         <button
           onClick={handleRunPipeline}
           disabled={running}
-          className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#7C3AED]/90 disabled:opacity-60"
+          className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#DC2626]/90 disabled:opacity-60"
         >
           {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
           {running ? "Running..." : "Run Pipeline"}
@@ -122,7 +122,7 @@ export default function AgentsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: "Total Agents", value: AGENTS.length, icon: Bot, color: "text-[#A78BFA]" },
+          { label: "Total Agents", value: AGENTS.length, icon: Bot, color: "text-[#FCA5A5]" },
           { label: "Total Runs", value: totalRuns.toLocaleString(), icon: Activity, color: "text-[#60A5FA]" },
           { label: "Avg Success", value: `${avgSuccess.toFixed(1)}%`, icon: CheckCircle, color: "text-emerald-400" },
           { label: "Avg Latency", value: `${Math.round(AGENTS.reduce((s, a) => s + a.avg_latency_ms, 0) / AGENTS.length)}ms`, icon: Clock, color: "text-[#F59E0B]" },
@@ -160,7 +160,7 @@ export default function AgentsPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? "bg-[#7C3AED]/15 text-[#A78BFA]"
+                  ? "bg-[#DC2626]/15 text-[#FCA5A5]"
                   : "text-[#94A3B8] hover:text-white"
               }`}
             >
@@ -188,10 +188,10 @@ export default function AgentsPage() {
                 <svg width="500" height="680" viewBox="0 0 500 680">
                   <defs>
                     <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                      <polygon points="0 0, 10 3.5, 0 7" fill="#7C3AED" fillOpacity="0.5" />
+                      <polygon points="0 0, 10 3.5, 0 7" fill="#DC2626" fillOpacity="0.5" />
                     </marker>
                     <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.3" />
+                      <stop offset="0%" stopColor="#DC2626" stopOpacity="0.3" />
                       <stop offset="100%" stopColor="#2563EB" stopOpacity="0.3" />
                     </linearGradient>
                   </defs>
@@ -207,13 +207,13 @@ export default function AgentsPage() {
                         <line
                           x1={from.x} y1={from.y + 45}
                           x2={to.x} y2={to.y}
-                          stroke={edgeActive ? "#7C3AED" : "url(#edgeGrad)"}
+                          stroke={edgeActive ? "#DC2626" : "url(#edgeGrad)"}
                           strokeWidth={edgeActive ? 2.5 : 2}
                           strokeOpacity={edgeActive ? 0.8 : 1}
                           markerEnd="url(#arrow)"
                         />
                         {edgeActive && (
-                          <circle r="3" fill="#7C3AED">
+                          <circle r="3" fill="#DC2626">
                             <animateMotion
                               dur="0.8s"
                               repeatCount="indefinite"
@@ -292,9 +292,9 @@ export default function AgentsPage() {
                 className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-5 backdrop-blur-xl"
               >
                 <div className="mb-3 flex items-center gap-3">
-                  <div className="rounded-xl bg-[#7C3AED]/10 p-2.5">
+                  <div className="rounded-xl bg-[#DC2626]/10 p-2.5">
                     {running ? (
-                      <Loader2 className="h-5 w-5 text-[#7C3AED] animate-spin" />
+                      <Loader2 className="h-5 w-5 text-[#DC2626] animate-spin" />
                     ) : (
                       <CheckCircle className="h-5 w-5 text-emerald-400" />
                     )}
@@ -343,8 +343,8 @@ export default function AgentsPage() {
                     className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-5 backdrop-blur-xl"
                   >
                     <div className="mb-3 flex items-center gap-3">
-                      <div className="rounded-xl bg-[#7C3AED]/10 p-2.5">
-                        <Bot className="h-5 w-5 text-[#7C3AED]" />
+                      <div className="rounded-xl bg-[#DC2626]/10 p-2.5">
+                        <Bot className="h-5 w-5 text-[#DC2626]" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-white">{agent.name}</h3>
@@ -380,7 +380,7 @@ export default function AgentsPage() {
                         <p className="mb-2 text-xs font-medium text-[#94A3B8]">Tools</p>
                         <div className="flex flex-wrap gap-1.5">
                           {agent.tools_used.map((tool) => (
-                            <span key={tool} className="rounded-lg bg-[#7C3AED]/10 px-2 py-1 text-[10px] text-[#A78BFA]">
+                            <span key={tool} className="rounded-lg bg-[#DC2626]/10 px-2 py-1 text-[10px] text-[#FCA5A5]">
                               {tool}
                             </span>
                           ))}
@@ -393,8 +393,8 @@ export default function AgentsPage() {
             ) : (
               <div className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-5 backdrop-blur-xl">
                 <div className="mb-4 flex items-center gap-3">
-                  <div className="rounded-xl bg-[#7C3AED]/10 p-2.5">
-                    <Activity className="h-5 w-5 text-[#7C3AED]" />
+                  <div className="rounded-xl bg-[#DC2626]/10 p-2.5">
+                    <Activity className="h-5 w-5 text-[#DC2626]" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Pipeline Overview</h3>
@@ -438,8 +438,8 @@ export default function AgentsPage() {
             >
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-[#7C3AED]/10 p-2.5">
-                    <Bot className="h-5 w-5 text-[#7C3AED]" />
+                  <div className="rounded-xl bg-[#DC2626]/10 p-2.5">
+                    <Bot className="h-5 w-5 text-[#DC2626]" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">{agent.name}</h3>
@@ -465,7 +465,7 @@ export default function AgentsPage() {
 
               <div className="mt-3 flex flex-wrap gap-1">
                 {agent.tools_used.map((tool) => (
-                  <span key={tool} className="rounded-md bg-[#7C3AED]/10 px-2 py-0.5 text-[10px] text-[#A78BFA]">
+                  <span key={tool} className="rounded-md bg-[#DC2626]/10 px-2 py-0.5 text-[10px] text-[#FCA5A5]">
                     {tool}
                   </span>
                 ))}
@@ -507,7 +507,7 @@ export default function AgentsPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Zap className="h-3 w-3 text-[#7C3AED]" />
+                    <Zap className="h-3 w-3 text-[#DC2626]" />
                     <span className="text-xs text-[#94A3B8]">{run.tools_used.length} tools</span>
                   </div>
                 </button>
@@ -531,7 +531,7 @@ export default function AgentsPage() {
                     {run.tools_used.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1">
                         {run.tools_used.map((tool) => (
-                          <span key={tool} className="rounded-md bg-[#7C3AED]/10 px-2 py-0.5 text-[10px] text-[#A78BFA]">{tool}</span>
+                          <span key={tool} className="rounded-md bg-[#DC2626]/10 px-2 py-0.5 text-[10px] text-[#FCA5A5]">{tool}</span>
                         ))}
                       </div>
                     )}

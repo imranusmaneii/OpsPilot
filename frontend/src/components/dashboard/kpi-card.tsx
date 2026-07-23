@@ -38,7 +38,7 @@ export function KpiCard({ title, value, change, icon: Icon, color }: KpiCardProp
         <div
           className={`rounded-xl p-2.5 transition-colors ${
             color === "purple"
-              ? "bg-[#7C3AED]/10 text-[#7C3AED] group-hover:bg-[#7C3AED]/20"
+              ? "bg-[#DC2626]/10 text-[#DC2626] group-hover:bg-[#DC2626]/20"
               : "bg-[#2563EB]/10 text-[#2563EB] group-hover:bg-[#2563EB]/20"
           }`}
         >

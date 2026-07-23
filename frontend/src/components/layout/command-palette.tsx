@@ -118,7 +118,7 @@ export function CommandPalette() {
                       onMouseEnter={() => setSelectedIndex(i)}
                       className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                         i === selectedIndex
-                          ? "bg-[#7C3AED]/15 text-[#A78BFA]"
+                          ? "bg-[#DC2626]/15 text-[#FCA5A5]"
                           : "text-[#94A3B8] hover:bg-white/[0.05] hover:text-white"
                       }`}
                     >

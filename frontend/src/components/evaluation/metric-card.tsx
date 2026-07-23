@@ -14,7 +14,7 @@ interface MetricCardProps {
 export function MetricCard({ label, value, icon: Icon, color, description }: MetricCardProps) {
   const percentage = Math.round(value * 100);
   const colorMap: Record<string, { bg: string; text: string; bar: string }> = {
-    purple: { bg: "bg-[#7C3AED]/10", text: "text-[#7C3AED]", bar: "bg-[#7C3AED]" },
+    purple: { bg: "bg-[#DC2626]/10", text: "text-[#DC2626]", bar: "bg-[#DC2626]" },
     blue: { bg: "bg-[#2563EB]/10", text: "text-[#2563EB]", bar: "bg-[#2563EB]" },
     green: { bg: "bg-emerald-500/10", text: "text-emerald-400", bar: "bg-emerald-400" },
     amber: { bg: "bg-amber-500/10", text: "text-amber-400", bar: "bg-amber-400" },

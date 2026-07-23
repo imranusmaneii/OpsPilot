@@ -98,7 +98,7 @@ const PROVIDERS = [
     description: "Custom integrations via HTTP webhooks and event triggers",
     icon: "webhook",
     category: "Developer",
-    color: "bg-[#7C3AED]/30 text-[#A78BFA]",
+    color: "bg-[#DC2626]/30 text-[#FCA5A5]",
   },
 ];
 
@@ -215,7 +215,7 @@ export default function IntegrationsPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           { label: "Connected", value: integrations.filter((i) => i.status === "active").length, color: "text-emerald-400" },
-          { label: "Total Synced", value: integrations.reduce((sum, i) => sum + i.syncCount, 0).toLocaleString(), color: "text-[#A78BFA]" },
+          { label: "Total Synced", value: integrations.reduce((sum, i) => sum + i.syncCount, 0).toLocaleString(), color: "text-[#FCA5A5]" },
           { label: "Available", value: PROVIDERS.length, color: "text-[#94A3B8]" },
           { label: "Last Sync", value: "2m ago", color: "text-[#94A3B8]" },
         ].map((stat, i) => (
@@ -238,7 +238,7 @@ export default function IntegrationsPage() {
           onClick={() => setActiveTab("connected")}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === "connected"
-              ? "bg-[#7C3AED]/15 text-[#A78BFA]"
+              ? "bg-[#DC2626]/15 text-[#FCA5A5]"
               : "text-[#94A3B8] hover:text-white"
           }`}
         >
@@ -248,7 +248,7 @@ export default function IntegrationsPage() {
           onClick={() => setActiveTab("available")}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === "available"
-              ? "bg-[#7C3AED]/15 text-[#A78BFA]"
+              ? "bg-[#DC2626]/15 text-[#FCA5A5]"
               : "text-[#94A3B8] hover:text-white"
           }`}
         >
@@ -265,7 +265,7 @@ export default function IntegrationsPage() {
               <p className="text-xs text-[#475569]">Browse available integrations to get started</p>
               <button
                 onClick={() => setActiveTab("available")}
-                className="mt-4 rounded-xl bg-[#7C3AED] px-4 py-2 text-sm font-medium text-white hover:bg-[#7C3AED]/90"
+                className="mt-4 rounded-xl bg-[#DC2626] px-4 py-2 text-sm font-medium text-white hover:bg-[#DC2626]/90"
               >
                 Browse Integrations
               </button>
@@ -338,7 +338,7 @@ export default function IntegrationsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search integrations..."
-              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 pl-10 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#7C3AED]/40"
+              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 pl-10 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#DC2626]/40"
             />
             <Zap className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#475569]" />
           </div>
@@ -374,7 +374,7 @@ export default function IntegrationsPage() {
                     className={`shrink-0 rounded-xl px-4 py-2 text-xs font-medium transition-all ${
                       isConnected
                         ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-                        : "bg-[#7C3AED] text-white hover:bg-[#7C3AED]/90"
+                        : "bg-[#DC2626] text-white hover:bg-[#DC2626]/90"
                     }`}
                   >
                     {isConnected ? (

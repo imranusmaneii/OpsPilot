@@ -8,7 +8,7 @@
   --background: #050810;
   --secondary: #0A0F1E;
   --card: rgba(255,255,255,0.03);
-  --accent-purple: #7C3AED;
+  --accent-red: #DC2626;
   --accent-blue: #2563EB;
   --text-primary: #FFFFFF;
   --text-secondary: #94A3B8;
@@ -56,7 +56,7 @@ body {
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #A78BFA, #60A5FA);
+    background: linear-gradient(135deg, #FCA5A5, #F87171);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -74,7 +74,7 @@ body {
     inset: -1px;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(124,58,237,0.4), rgba(37,99,235,0.4));
+    background: linear-gradient(135deg, rgba(220,38,38,0.4), rgba(153,27,27,0.4));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -83,7 +83,7 @@ body {
   }
 
   .glow-purple {
-    box-shadow: 0 0 30px rgba(124, 58, 237, 0.12);
+    box-shadow: 0 0 30px rgba(220, 38, 38, 0.12);
   }
 
   .glow-blue {
@@ -91,7 +91,7 @@ body {
   }
 
   .text-glow {
-    text-shadow: 0 0 30px rgba(124, 58, 237, 0.4);
+    text-shadow: 0 0 30px rgba(220, 38, 38, 0.4);
   }
 
   .scrollbar-thin::-webkit-scrollbar {

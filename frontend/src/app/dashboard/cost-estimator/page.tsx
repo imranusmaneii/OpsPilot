@@ -6,7 +6,7 @@ import { DollarSign, Calculator, TrendingUp, Zap, ArrowRight } from "lucide-reac
 import { apiClient } from "@/lib/api-client";
 
 const MODELS = [
-  { id: "gpt-4o", name: "GPT-4o", input: 2.50, output: 10.00, color: "#7C3AED" },
+  { id: "gpt-4o", name: "GPT-4o", input: 2.50, output: 10.00, color: "#DC2626" },
   { id: "gpt-4o-mini", name: "GPT-4o Mini", input: 0.15, output: 0.60, color: "#2563EB" },
   { id: "gpt-4-turbo", name: "GPT-4 Turbo", input: 10.00, output: 30.00, color: "#EC4899" },
   { id: "claude-3.5-sonnet", name: "Claude 3.5 Sonnet", input: 3.00, output: 15.00, color: "#F59E0B" },
@@ -60,7 +60,7 @@ export default function CostEstimatorPage() {
             onClick={() => handleScenario(s)}
             className={`rounded-xl border px-4 py-2.5 text-left transition-all ${
               selectedScenario === s.name
-                ? "border-[#7C3AED]/50 bg-[#7C3AED]/10"
+                ? "border-[#DC2626]/50 bg-[#DC2626]/10"
                 : "border-white/10 bg-white/5 hover:bg-white/[0.08]"
             }`}
           >
@@ -77,7 +77,7 @@ export default function CostEstimatorPage() {
             type="number"
             value={inputTokens}
             onChange={(e) => setInputTokens(parseInt(e.target.value) || 0)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none focus:border-[#7C3AED]/50"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none focus:border-[#DC2626]/50"
           />
         </div>
         <div>
@@ -86,7 +86,7 @@ export default function CostEstimatorPage() {
             type="number"
             value={outputTokens}
             onChange={(e) => setOutputTokens(parseInt(e.target.value) || 0)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none focus:border-[#7C3AED]/50"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none focus:border-[#DC2626]/50"
           />
         </div>
         <div>
@@ -95,7 +95,7 @@ export default function CostEstimatorPage() {
             type="number"
             value={monthlyRequests}
             onChange={(e) => setMonthlyRequests(parseInt(e.target.value) || 0)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none focus:border-[#7C3AED]/50"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none focus:border-[#DC2626]/50"
           />
         </div>
       </div>
@@ -140,7 +140,7 @@ export default function CostEstimatorPage() {
           <h2 className="text-sm font-medium text-[#94A3B8] uppercase tracking-wider">Monthly Projection</h2>
           <button
             onClick={() => setShowBreakdown(!showBreakdown)}
-            className="flex items-center gap-1 text-xs text-[#7C3AED]"
+            className="flex items-center gap-1 text-xs text-[#DC2626]"
           >
             <Calculator className="h-3 w-3" />
             {showBreakdown ? "Hide" : "Show"} Breakdown
@@ -165,16 +165,16 @@ export default function CostEstimatorPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-6">
-        <div className="mb-3 flex items-center gap-2 text-[#7C3AED]">
+      <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-6">
+        <div className="mb-3 flex items-center gap-2 text-[#DC2626]">
           <TrendingUp className="h-5 w-5" />
           <span className="font-medium">Cost Optimization Tips</span>
         </div>
         <ul className="space-y-2 text-sm text-[#94A3B8]">
-          <li className="flex items-start gap-2"><Zap className="mt-0.5 h-3 w-3 text-[#7C3AED]" />Use GPT-4o Mini or Claude 3 Haiku for simple tasks (90% cost savings)</li>
-          <li className="flex items-start gap-2"><Zap className="mt-0.5 h-3 w-3 text-[#7C3AED]" />Cache frequently accessed RAG results to reduce redundant API calls</li>
-          <li className="flex items-start gap-2"><Zap className="mt-0.5 h-3 w-3 text-[#7C3AED]" />Batch process documents during off-peak hours for lower latency</li>
-          <li className="flex items-start gap-2"><Zap className="mt-0.5 h-3 w-3 text-[#7C3AED]" />Use embeddings for semantic search instead of full LLM calls when possible</li>
+          <li className="flex items-start gap-2"><Zap className="mt-0.5 h-3 w-3 text-[#DC2626]" />Use GPT-4o Mini or Claude 3 Haiku for simple tasks (90% cost savings)</li>
+          <li className="flex items-start gap-2"><Zap className="mt-0.5 h-3 w-3 text-[#DC2626]" />Cache frequently accessed RAG results to reduce redundant API calls</li>
+          <li className="flex items-start gap-2"><Zap className="mt-0.5 h-3 w-3 text-[#DC2626]" />Batch process documents during off-peak hours for lower latency</li>
+          <li className="flex items-start gap-2"><Zap className="mt-0.5 h-3 w-3 text-[#DC2626]" />Use embeddings for semantic search instead of full LLM calls when possible</li>
         </ul>
       </div>
     </div>

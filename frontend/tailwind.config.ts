@@ -15,7 +15,7 @@ const config: Config = {
         secondary: "#0A0F1E",
         card: "rgba(255,255,255,0.03)",
         accent: {
-          purple: "#7C3AED",
+          red: "#DC2626",
           blue: "#2563EB",
         },
         muted: "#94A3B8",
@@ -42,8 +42,8 @@ const config: Config = {
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         glow: {
-          "0%": { boxShadow: "0 0 20px rgba(124,58,237,0.12)" },
-          "100%": { boxShadow: "0 0 40px rgba(124,58,237,0.25)" },
+          "0%": { boxShadow: "0 0 20px rgba(220,38,38,0.12)" },
+          "100%": { boxShadow: "0 0 40px rgba(220,38,38,0.25)" },
         },
         float: {
           "0%, 100%": { transform: "translateY(0px)" },

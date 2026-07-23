@@ -23,7 +23,7 @@ type Theme = "dark" | "midnight" | "oled";
 type AccentColor = string;
 
 const ACCENT_COLORS = [
-  { name: "Purple", value: "#7C3AED" },
+  { name: "Red", value: "#DC2626" },
   { name: "Blue", value: "#2563EB" },
   { name: "Emerald", value: "#059669" },
   { name: "Amber", value: "#D97706" },
@@ -41,7 +41,7 @@ function applyTheme(theme: Theme, accent: string) {
   const root = document.documentElement;
   root.classList.remove("dark", "midnight", "oled");
   root.classList.add(theme);
-  root.style.setProperty("--accent-purple", accent);
+  root.style.setProperty("--accent-red", accent);
 
   if (theme === "oled") {
     root.style.setProperty("--background", "#000000");
@@ -56,15 +56,15 @@ function applyTheme(theme: Theme, accent: string) {
 }
 
 function loadSettings(): { theme: Theme; accent: string } {
-  if (typeof window === "undefined") return { theme: "dark", accent: "#7C3AED" };
+  if (typeof window === "undefined") return { theme: "dark", accent: "#DC2626" };
   try {
     const saved = localStorage.getItem("opspilot-settings");
     if (saved) {
       const parsed = JSON.parse(saved);
-      return { theme: parsed.theme || "dark", accent: parsed.accent || "#7C3AED" };
+      return { theme: parsed.theme || "dark", accent: parsed.accent || "#DC2626" };
     }
   } catch {}
-  return { theme: "dark", accent: "#7C3AED" };
+  return { theme: "dark", accent: "#DC2626" };
 }
 
 function saveSettings(theme: Theme, accent: string) {
@@ -81,7 +81,7 @@ export default function SettingsPage() {
   const [apiKey] = useState("opspilot_k8x92mN4pQ7wR3tY6bV1cZ5aF0dG");
 
   const [currentTheme, setCurrentTheme] = useState<Theme>("dark");
-  const [currentAccent, setCurrentAccent] = useState<AccentColor>("#7C3AED");
+  const [currentAccent, setCurrentAccent] = useState<AccentColor>("#DC2626");
   const [compactSidebar, setCompactSidebar] = useState(false);
   const [notifications, setNotifications] = useState({
     docIndexing: true,
@@ -138,7 +138,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                     activeTab === tab.id
-                      ? "bg-[#7C3AED]/15 text-[#A78BFA]"
+                      ? "bg-[#DC2626]/15 text-[#FCA5A5]"
                       : "text-[#475569] hover:bg-white/[0.04] hover:text-[#94A3B8]"
                   }`}
                 >
@@ -157,7 +157,7 @@ export default function SettingsPage() {
               <div className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-6 backdrop-blur-xl">
                 <h3 className="mb-4 text-lg font-semibold text-white">Profile Information</h3>
                 <div className="flex items-center gap-6 mb-6">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#2563EB] text-2xl font-bold text-white shadow-lg shadow-[#7C3AED]/20">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#DC2626] to-[#2563EB] text-2xl font-bold text-white shadow-lg shadow-[#DC2626]/20">
                     OP
                   </div>
                   <div>
@@ -172,7 +172,7 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       defaultValue="Admin User"
-                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#7C3AED]/40 focus:bg-white/[0.05]"
+                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#DC2626]/40 focus:bg-white/[0.05]"
                     />
                   </div>
                   <div>
@@ -180,7 +180,7 @@ export default function SettingsPage() {
                     <input
                       type="email"
                       defaultValue="admin@opspilot.ai"
-                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#7C3AED]/40 focus:bg-white/[0.05]"
+                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#DC2626]/40 focus:bg-white/[0.05]"
                     />
                   </div>
                   <div>
@@ -188,7 +188,7 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       defaultValue="AI Engineer"
-                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#7C3AED]/40 focus:bg-white/[0.05]"
+                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#DC2626]/40 focus:bg-white/[0.05]"
                     />
                   </div>
                   <div>
@@ -196,7 +196,7 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       defaultValue="OpsPilot AI"
-                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#7C3AED]/40 focus:bg-white/[0.05]"
+                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#DC2626]/40 focus:bg-white/[0.05]"
                     />
                   </div>
                 </div>
@@ -204,7 +204,7 @@ export default function SettingsPage() {
               <div className="flex justify-end">
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#6D28D9] hover:shadow-lg hover:shadow-[#7C3AED]/25"
+                  className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#991B1B] hover:shadow-lg hover:shadow-[#DC2626]/25"
                 >
                   {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                   {saved ? "Saved!" : "Save Changes"}
@@ -218,7 +218,7 @@ export default function SettingsPage() {
               <div className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-6 backdrop-blur-xl">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-white">API Keys</h3>
-                  <button className="flex items-center gap-2 rounded-xl border border-[#7C3AED]/30 bg-[#7C3AED]/10 px-4 py-2 text-xs font-medium text-[#A78BFA] transition-colors hover:bg-[#7C3AED]/20">
+                  <button className="flex items-center gap-2 rounded-xl border border-[#DC2626]/30 bg-[#DC2626]/10 px-4 py-2 text-xs font-medium text-[#FCA5A5] transition-colors hover:bg-[#DC2626]/20">
                     <Key className="h-3.5 w-3.5" />
                     Generate New Key
                   </button>
@@ -229,12 +229,12 @@ export default function SettingsPage() {
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#7C3AED]/10">
-                      <Sparkles className="h-5 w-5 text-[#7C3AED]" />
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#DC2626]/10">
+                      <Sparkles className="h-5 w-5 text-[#DC2626]" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-[#7C3AED]">Production</span>
+                        <span className="text-xs font-medium text-[#DC2626]">Production</span>
                         <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
                           Active
                         </span>
@@ -283,7 +283,7 @@ export default function SettingsPage() {
                     <p className="text-xs text-[#64748B]">Requests Today</p>
                     <p className="mt-1 text-2xl font-bold text-white">1,247</p>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className="h-full w-[62%] rounded-full bg-[#7C3AED]" />
+                      <div className="h-full w-[62%] rounded-full bg-[#DC2626]" />
                     </div>
                     <p className="mt-1 text-[10px] text-[#475569]">62% of 2,000 daily limit</p>
                   </div>
@@ -333,7 +333,7 @@ export default function SettingsPage() {
                         }))
                       }
                       className={`relative h-6 w-11 rounded-full transition-colors ${
-                        notifications[item.key] ? "bg-[#7C3AED]" : "bg-white/[0.08]"
+                        notifications[item.key] ? "bg-[#DC2626]" : "bg-white/[0.08]"
                       }`}
                     >
                       <span
@@ -348,7 +348,7 @@ export default function SettingsPage() {
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#6D28D9] hover:shadow-lg hover:shadow-[#7C3AED]/25"
+                  className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#991B1B] hover:shadow-lg hover:shadow-[#DC2626]/25"
                 >
                   {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                   {saved ? "Saved!" : "Save Preferences"}
@@ -367,7 +367,7 @@ export default function SettingsPage() {
                     <input
                       type="password"
                       placeholder="Enter current password"
-                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#7C3AED]/40"
+                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#DC2626]/40"
                     />
                   </div>
                   <div>
@@ -375,7 +375,7 @@ export default function SettingsPage() {
                     <input
                       type="password"
                       placeholder="Enter new password"
-                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#7C3AED]/40"
+                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#DC2626]/40"
                     />
                   </div>
                   <div>
@@ -383,7 +383,7 @@ export default function SettingsPage() {
                     <input
                       type="password"
                       placeholder="Confirm new password"
-                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#7C3AED]/40"
+                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-[#475569] outline-none transition-colors focus:border-[#DC2626]/40"
                     />
                   </div>
                 </div>
@@ -435,7 +435,7 @@ export default function SettingsPage() {
                           onClick={() => setCurrentTheme(theme.value)}
                           className={`flex items-center gap-3 rounded-xl border px-6 py-3 text-sm font-medium transition-all ${
                             isActive
-                              ? "border-[#7C3AED]/40 bg-[#7C3AED]/10 text-[#A78BFA]"
+                              ? "border-[#DC2626]/40 bg-[#DC2626]/10 text-[#FCA5A5]"
                               : "border-white/[0.06] bg-white/[0.02] text-[#475569] hover:bg-white/[0.04] hover:text-[#94A3B8]"
                           }`}
                         >
@@ -518,7 +518,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => setCompactSidebar(!compactSidebar)}
                       className={`relative h-6 w-11 rounded-full transition-colors ${
-                        compactSidebar ? "bg-[#7C3AED]" : "bg-white/[0.08]"
+                        compactSidebar ? "bg-[#DC2626]" : "bg-white/[0.08]"
                       }`}
                     >
                       <span
@@ -534,7 +534,7 @@ export default function SettingsPage() {
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#6D28D9] hover:shadow-lg hover:shadow-[#7C3AED]/25"
+                  className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#991B1B] hover:shadow-lg hover:shadow-[#DC2626]/25"
                 >
                   {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                   {saved ? "Saved!" : "Save Preferences"}

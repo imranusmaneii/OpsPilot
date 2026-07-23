@@ -123,12 +123,12 @@ export function UploadZone({ collectionId, onUploadComplete }: UploadZoneProps) 
         onClick={() => inputRef.current?.click()}
         className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 transition-all ${
           isDragging
-            ? "border-[#7C3AED] bg-[#7C3AED]/10"
-            : "border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] hover:border-[#7C3AED]/50 hover:bg-[rgba(255,255,255,0.05)]"
+            ? "border-[#DC2626] bg-[#DC2626]/10"
+            : "border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] hover:border-[#DC2626]/50 hover:bg-[rgba(255,255,255,0.05)]"
         }`}
       >
-        <div className="mb-4 rounded-2xl bg-[#7C3AED]/10 p-4">
-          <Upload className="h-8 w-8 text-[#7C3AED]" />
+        <div className="mb-4 rounded-2xl bg-[#DC2626]/10 p-4">
+          <Upload className="h-8 w-8 text-[#DC2626]" />
         </div>
         <p className="mb-2 text-sm font-medium">
           {isDragging ? "Drop files here" : "Drag & drop files here"}
@@ -163,7 +163,7 @@ export function UploadZone({ collectionId, onUploadComplete }: UploadZoneProps) 
               </p>
             </div>
             {f.status === "uploading" && (
-              <Loader2 className="h-4 w-4 animate-spin text-[#7C3AED]" />
+              <Loader2 className="h-4 w-4 animate-spin text-[#DC2626]" />
             )}
             {f.status === "success" && (
               <CheckCircle className="h-4 w-4 text-emerald-400" />

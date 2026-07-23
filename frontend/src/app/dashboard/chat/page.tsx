@@ -15,10 +15,8 @@ import {
   Plus,
   X,
   Upload,
-  LogIn,
 } from "lucide-react";
 import Link from "next/link";
-import { useAuthStore } from "@/stores/auth-store";
 
 interface Message {
   id: string;
@@ -44,18 +42,7 @@ interface UploadedDoc {
   type: string;
 }
 
-const FREE_MESSAGE_LIMIT = 5;
 
-function getFreeMessageCount(): number {
-  if (typeof window === "undefined") return 0;
-  return parseInt(localStorage.getItem("opspilot_free_messages") || "0", 10);
-}
-
-function incrementFreeMessageCount(): number {
-  const count = getFreeMessageCount() + 1;
-  localStorage.setItem("opspilot_free_messages", String(count));
-  return count;
-}
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -546,11 +533,10 @@ export default function ChatPage() {
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [showUploadMenu, setShowUploadMenu] = useState(false);
-  const [showLimitBanner, setShowLimitBanner] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { isAuthenticated } = useAuthStore();
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -597,14 +583,6 @@ export default function ChatPage() {
 
   const sendMessage = async () => {
     if (!input.trim() || isStreaming) return;
-
-    if (!isAuthenticated) {
-      const count = incrementFreeMessageCount();
-      if (count > FREE_MESSAGE_LIMIT) {
-        setShowLimitBanner(true);
-        return;
-      }
-    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -760,8 +738,7 @@ export default function ChatPage() {
           "What are the main risks identified?",
         ];
 
-  const freeMessagesRemaining =
-    FREE_MESSAGE_LIMIT - getFreeMessageCount();
+
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
@@ -788,65 +765,15 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Free usage banner */}
-      {!isAuthenticated && freeMessagesRemaining > 0 && freeMessagesRemaining <= 3 && (
-        <div className="mb-3 flex items-center gap-3 rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 px-4 py-2.5">
-          <Sparkles className="h-4 w-4 text-[#A78BFA]" />
-          <p className="text-xs text-[#A78BFA]">
-            You have {freeMessagesRemaining} free message{freeMessagesRemaining !== 1 ? "s" : ""} remaining.{" "}
-            <Link href="/login" className="font-medium underline hover:text-[#C4B5FD]">
-              Sign in for unlimited access
-            </Link>
-          </p>
-        </div>
-      )}
 
-      {/* Limit reached banner */}
-      <AnimatePresence>
-        {showLimitBanner && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="mb-3 rounded-xl border border-[#7C3AED]/30 bg-[#7C3AED]/10 p-4"
-          >
-            <div className="flex items-start gap-3">
-              <LogIn className="h-5 w-5 text-[#A78BFA] mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-white">
-                  Free message limit reached
-                </p>
-                <p className="mt-1 text-xs text-[#94A3B8]">
-                  You&apos;ve used all {FREE_MESSAGE_LIMIT} free messages. Sign
-                  in to continue chatting with unlimited access.
-                </p>
-                <div className="mt-3 flex gap-2">
-                  <Link
-                    href="/login"
-                    className="rounded-lg bg-[#7C3AED] px-4 py-2 text-xs font-medium text-white hover:bg-[#6D28D9]"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="rounded-lg border border-[#7C3AED]/30 px-4 py-2 text-xs font-medium text-[#A78BFA] hover:bg-[#7C3AED]/10"
-                  >
-                    Create Account
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <div className="flex flex-1 overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)]">
         <div className="flex flex-1 flex-col">
           <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center">
-                <div className="mb-6 rounded-2xl bg-[#7C3AED]/10 p-4">
-                  <Sparkles className="h-8 w-8 text-[#7C3AED]" />
+                <div className="mb-6 rounded-2xl bg-[#DC2626]/10 p-4">
+                  <Sparkles className="h-8 w-8 text-[#DC2626]" />
                 </div>
                 <h2 className="mb-2 text-xl font-semibold">
                   Ask OpsPilot AI
@@ -858,7 +785,7 @@ export default function ChatPage() {
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="mb-6 flex items-center gap-2 rounded-xl border border-dashed border-[#7C3AED]/40 bg-[#7C3AED]/5 px-5 py-3 text-sm text-[#A78BFA] transition-all hover:border-[#7C3AED]/60 hover:bg-[#7C3AED]/10"
+                  className="mb-6 flex items-center gap-2 rounded-xl border border-dashed border-[#DC2626]/40 bg-[#DC2626]/5 px-5 py-3 text-sm text-[#FCA5A5] transition-all hover:border-[#DC2626]/60 hover:bg-[#DC2626]/10"
                 >
                   <Upload className="h-4 w-4" />
                   Upload a PDF, DOCX, or text file to get started
@@ -872,7 +799,7 @@ export default function ChatPage() {
                         setInput(q);
                         inputRef.current?.focus();
                       }}
-                      className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-sm text-[#94A3B8] transition-all hover:border-[#7C3AED]/30 hover:bg-[#7C3AED]/5 hover:text-white"
+                      className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-sm text-[#94A3B8] transition-all hover:border-[#DC2626]/30 hover:bg-[#DC2626]/5 hover:text-white"
                     >
                       {q}
                     </button>
@@ -894,8 +821,8 @@ export default function ChatPage() {
                       }`}
                     >
                       {message.role === "assistant" && (
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#7C3AED]/20">
-                          <Bot className="h-4 w-4 text-[#7C3AED]" />
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#DC2626]/20">
+                          <Bot className="h-4 w-4 text-[#DC2626]" />
                         </div>
                       )}
 
@@ -907,7 +834,7 @@ export default function ChatPage() {
                         <div
                           className={`rounded-2xl px-4 py-3 ${
                             message.role === "user"
-                              ? "bg-[#7C3AED]/20 text-white"
+                              ? "bg-[#DC2626]/20 text-white"
                               : "glass"
                           }`}
                         >
@@ -963,14 +890,14 @@ export default function ChatPage() {
                                     key={i}
                                     className="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1.5"
                                   >
-                                    <FileText className="h-3 w-3 text-[#7C3AED]" />
+                                    <FileText className="h-3 w-3 text-[#DC2626]" />
                                     <span className="text-xs text-[#94A3B8]">
                                       {source.title}
                                       {source.page &&
                                         ` (p.${source.page})`}
                                     </span>
                                     {source.score && (
-                                      <span className="rounded bg-[#7C3AED]/10 px-1 py-0.5 text-[10px] text-[#7C3AED]">
+                                      <span className="rounded bg-[#DC2626]/10 px-1 py-0.5 text-[10px] text-[#DC2626]">
                                         {Math.round(source.score * 100)}%
                                       </span>
                                     )}
@@ -1016,10 +943,10 @@ export default function ChatPage() {
                     key={i}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="flex items-center gap-1.5 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/10 px-2.5 py-1.5"
+                    className="flex items-center gap-1.5 rounded-lg border border-[#DC2626]/20 bg-[#DC2626]/10 px-2.5 py-1.5"
                   >
-                    <FileText className="h-3 w-3 text-[#A78BFA]" />
-                    <span className="max-w-[150px] truncate text-xs text-[#A78BFA]">
+                    <FileText className="h-3 w-3 text-[#FCA5A5]" />
+                    <span className="max-w-[150px] truncate text-xs text-[#FCA5A5]">
                       {doc.name}
                     </span>
                     <span className="text-[10px] text-[#475569]">
@@ -1041,7 +968,7 @@ export default function ChatPage() {
                 <button
                   onClick={() => setShowUploadMenu(!showUploadMenu)}
                   disabled={isParsing}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] text-[#94A3B8] transition-all hover:border-[#7C3AED]/40 hover:bg-[#7C3AED]/10 hover:text-[#A78BFA]"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] text-[#94A3B8] transition-all hover:border-[#DC2626]/40 hover:bg-[#DC2626]/10 hover:text-[#FCA5A5]"
                 >
                   {isParsing ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1094,8 +1021,7 @@ export default function ChatPage() {
                     : "Ask a question..."
                 }
                 rows={1}
-                disabled={showLimitBanner}
-                className="flex-1 resize-none rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.05)] px-4 py-3 text-sm text-white placeholder-[#94A3B8]/50 outline-none transition-all focus:border-[#7C3AED]/50 focus:ring-1 focus:ring-[#7C3AED]/50 disabled:opacity-50"
+
                 style={{ minHeight: "44px", maxHeight: "120px" }}
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
@@ -1106,8 +1032,8 @@ export default function ChatPage() {
               />
               <button
                 onClick={sendMessage}
-                disabled={!input.trim() || isStreaming || showLimitBanner}
-                className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#7C3AED] text-white transition-all hover:bg-[#7C3AED]/90 disabled:opacity-50"
+                disabled={!input.trim() || isStreaming}
+                className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#DC2626] text-white transition-all hover:bg-[#DC2626]/90 disabled:opacity-50"
               >
                 {isStreaming ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -19,7 +19,7 @@ interface LineChartProps {
 export function LineChart({
   data,
   height = 200,
-  color = "#7C3AED",
+  color = "#DC2626",
   gradient = true,
   showDots = true,
 }: LineChartProps) {

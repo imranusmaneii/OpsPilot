@@ -72,7 +72,7 @@ export function ExecutionViewer({ runs }: ExecutionViewerProps) {
 
               {run.tools_used.length > 0 && (
                 <div className="flex items-center gap-1">
-                  <Zap className="h-3 w-3 text-[#7C3AED]" />
+                  <Zap className="h-3 w-3 text-[#DC2626]" />
                   <span className="text-xs text-[#94A3B8]">{run.tools_used.length} tools</span>
                 </div>
               )}
@@ -115,7 +115,7 @@ export function ExecutionViewer({ runs }: ExecutionViewerProps) {
                           {run.tools_used.map((tool) => (
                             <span
                               key={tool}
-                              className="rounded-md bg-[#7C3AED]/10 px-2 py-0.5 text-[10px] text-[#7C3AED]"
+                              className="rounded-md bg-[#DC2626]/10 px-2 py-0.5 text-[10px] text-[#DC2626]"
                             >
                               {tool}
                             </span>

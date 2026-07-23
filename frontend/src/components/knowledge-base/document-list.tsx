@@ -50,8 +50,8 @@ export function DocumentList({ documents, onSelect, onDelete }: DocumentListProp
             onClick={() => onSelect?.(doc.id)}
             className="glass glass-hover group flex cursor-pointer items-center gap-4 rounded-xl p-4 transition-all"
           >
-            <div className="rounded-xl bg-[#7C3AED]/10 p-2.5">
-              <FileText className="h-5 w-5 text-[#7C3AED]" />
+            <div className="rounded-xl bg-[#DC2626]/10 p-2.5">
+              <FileText className="h-5 w-5 text-[#DC2626]" />
             </div>
 
             <div className="min-w-0 flex-1">

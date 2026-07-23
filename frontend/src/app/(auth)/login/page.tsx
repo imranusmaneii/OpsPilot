@@ -98,7 +98,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#050810] px-4">
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#7C3AED]/[0.04] blur-[120px]" />
+        <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#DC2626]/[0.04] blur-[120px]" />
         <div className="absolute left-1/4 top-1/3 h-[300px] w-[300px] rounded-full bg-[#2563EB]/[0.03] blur-[100px]" />
       </div>
 
@@ -110,7 +110,7 @@ export default function LoginPage() {
       >
         <div className="glass rounded-2xl p-8">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED] to-[#2563EB] shadow-lg shadow-[#7C3AED]/20">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#DC2626] to-[#2563EB] shadow-lg shadow-[#DC2626]/20">
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-white">Welcome back</h1>
@@ -170,7 +170,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
-                className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-white placeholder-[#475569] outline-none transition-all focus:border-[#7C3AED]/40 focus:bg-white/[0.05]"
+                className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-white placeholder-[#475569] outline-none transition-all focus:border-[#DC2626]/40 focus:bg-white/[0.05]"
                 required
               />
             </div>
@@ -185,7 +185,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 pr-12 text-white placeholder-[#475569] outline-none transition-all focus:border-[#7C3AED]/40 focus:bg-white/[0.05]"
+                  className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 pr-12 text-white placeholder-[#475569] outline-none transition-all focus:border-[#DC2626]/40 focus:bg-white/[0.05]"
                   required
                 />
                 <button
@@ -205,7 +205,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-3 font-medium text-white transition-all hover:bg-[#6D28D9] hover:shadow-lg hover:shadow-[#7C3AED]/25 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#DC2626] px-4 py-3 font-medium text-white transition-all hover:bg-[#991B1B] hover:shadow-lg hover:shadow-[#DC2626]/25 disabled:opacity-50"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -222,7 +222,7 @@ export default function LoginPage() {
             Don&apos;t have an account?{" "}
             <Link
               href="/register"
-              className="text-[#A78BFA] hover:text-[#C4B5FD] transition-colors"
+              className="text-[#FCA5A5] hover:text-[#C4B5FD] transition-colors"
             >
               Sign up
             </Link>

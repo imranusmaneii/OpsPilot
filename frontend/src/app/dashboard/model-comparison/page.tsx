@@ -89,12 +89,12 @@ export default function ModelComparisonPage() {
               key={model.id}
               onClick={() => toggleModel(model.id)}
               className={`rounded-xl border p-4 text-left transition-all ${
-                selected ? "border-[#7C3AED]/50 bg-[#7C3AED]/10" : "border-white/10 bg-white/5 hover:bg-white/[0.08]"
+                selected ? "border-[#DC2626]/50 bg-[#DC2626]/10" : "border-white/10 bg-white/5 hover:bg-white/[0.08]"
               }`}
             >
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium">{model.name}</span>
-                {selected && <CheckCircle className="h-4 w-4 text-[#7C3AED]" />}
+                {selected && <CheckCircle className="h-4 w-4 text-[#DC2626]" />}
               </div>
               <div className="text-xs text-[#94A3B8]">{model.provider}</div>
               <div className="mt-2 flex gap-2 text-[10px] text-[#94A3B8]">
@@ -113,12 +113,12 @@ export default function ModelComparisonPage() {
           value={testPrompt}
           onChange={(e) => setTestPrompt(e.target.value)}
           placeholder="Enter a test prompt or select below..."
-          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-[#94A3B8] outline-none focus:border-[#7C3AED]/50"
+          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-[#94A3B8] outline-none focus:border-[#DC2626]/50"
         />
         <button
           onClick={runComparison}
           disabled={running || !testPrompt || selectedModels.length === 0}
-          className="flex items-center gap-2 rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#7C3AED]/90 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#DC2626]/90 disabled:opacity-50"
         >
           <ArrowRight className={`h-4 w-4 ${running ? "animate-pulse" : ""}`} />
           {running ? "Testing..." : "Compare"}
@@ -155,7 +155,7 @@ export default function ModelComparisonPage() {
                           animate={{ width: `${scores[modelId][b]}%` }}
                           transition={{ duration: 0.8, ease: "easeOut" }}
                           className="h-full rounded-full"
-                          style={{ background: `linear-gradient(90deg, #7C3AED, #2563EB)` }}
+                          style={{ background: `linear-gradient(90deg, #DC2626, #2563EB)` }}
                         />
                       </div>
                       <span className="w-10 text-right text-xs text-white">{scores[modelId][b]}</span>

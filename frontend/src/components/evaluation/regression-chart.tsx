@@ -44,7 +44,7 @@ export function RegressionChart({ data }: RegressionChartProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-4 text-xs text-[#94A3B8]">
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-[#7C3AED]" /> Faithfulness
+          <span className="h-2 w-2 rounded-full bg-[#DC2626]" /> Faithfulness
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-[#2563EB]" /> Relevancy

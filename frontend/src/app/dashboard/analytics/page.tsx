@@ -82,7 +82,7 @@ export default function AnalyticsPage() {
     ? cost.map((c, i) => ({
         label: c.model || "unknown",
         value: c.cost,
-        color: ["#7C3AED", "#2563EB", "#10B981", "#F59E0B", "#EF4444"][i % 5],
+        color: ["#DC2626", "#2563EB", "#10B981", "#F59E0B", "#EF4444"][i % 5],
       }))
     : [{ label: "No data", value: 1, color: "#94A3B8" }];
 
@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-2xl p-6">
           <div className="mb-4 flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-[#7C3AED]" />
+            <BarChart3 className="h-4 w-4 text-[#DC2626]" />
             <h3 className="text-lg font-semibold">Daily Usage</h3>
           </div>
           {usageBarData.length > 0 ? (

@@ -10,7 +10,7 @@ interface AgentGraphProps {
 }
 
 const agentColors: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-  planner: { bg: "bg-purple-500/10", border: "border-purple-500/30", text: "text-purple-400", glow: "shadow-purple-500/20" },
+  planner: { bg: "bg-red-500/10", border: "border-red-500/30", text: "text-red-400", glow: "shadow-red-500/20" },
   retriever: { bg: "bg-blue-500/10", border: "border-blue-500/30", text: "text-blue-400", glow: "shadow-blue-500/20" },
   document_qa: { bg: "bg-cyan-500/10", border: "border-cyan-500/30", text: "text-cyan-400", glow: "shadow-cyan-500/20" },
   api_agent: { bg: "bg-amber-500/10", border: "border-amber-500/30", text: "text-amber-400", glow: "shadow-amber-500/20" },
@@ -59,12 +59,12 @@ export function AgentGraph({ workflow, activeAgent, onNodeClick }: AgentGraphPro
           <defs>
             {workflow.edges.map((edge, i) => (
               <linearGradient key={i} id={`edge-grad-${i}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.4" />
+                <stop offset="0%" stopColor="#DC2626" stopOpacity="0.4" />
                 <stop offset="100%" stopColor="#2563EB" stopOpacity="0.4" />
               </linearGradient>
             ))}
             <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-              <polygon points="0 0, 10 3.5, 0 7" fill="#7C3AED" fillOpacity="0.5" />
+              <polygon points="0 0, 10 3.5, 0 7" fill="#DC2626" fillOpacity="0.5" />
             </marker>
           </defs>
 

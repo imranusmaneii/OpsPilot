@@ -12,7 +12,7 @@ interface Point {
   dimension: number;
 }
 
-const CLUSTER_COLORS = ["#7C3AED", "#2563EB", "#EC4899", "#F59E0B", "#10B981"];
+const CLUSTER_COLORS = ["#DC2626", "#2563EB", "#EC4899", "#F59E0B", "#10B981"];
 const CLUSTER_NAMES = ["Technical", "Business", "Legal", "Research", "Operations"];
 
 const EMBEDDING_MODELS = [
@@ -203,9 +203,9 @@ export default function EmbeddingsPage() {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className="rounded-2xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-4"
+          className="rounded-2xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-4"
         >
-          <p className="text-sm text-[#A78BFA]">
+          <p className="text-sm text-[#FCA5A5]">
             <strong>How it works:</strong> Documents are converted into high-dimensional vectors (embeddings) using
             neural networks. This visualization uses t-SNE dimensionality reduction to project 1536-dimensional vectors
             into 2D space, revealing semantic clusters in your document corpus.
@@ -220,7 +220,7 @@ export default function EmbeddingsPage() {
             type="text"
             onChange={(e) => setSearchTerm(e.target.value.length > 0)}
             placeholder="Search embeddings..."
-            className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-2.5 pl-10 pr-4 text-sm text-white placeholder-[#475569] outline-none focus:border-[#7C3AED]/50"
+            className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-2.5 pl-10 pr-4 text-sm text-white placeholder-[#475569] outline-none focus:border-[#DC2626]/50"
           />
         </div>
         <button onClick={() => setZoom((z) => Math.min(z + 0.3, 3))} className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-2.5 text-[#94A3B8] hover:text-white">
@@ -293,7 +293,7 @@ export default function EmbeddingsPage() {
           {/* Model Info */}
           <div className="rounded-xl border border-white/[0.06] bg-[#0A0F1E]/60 p-4 backdrop-blur-xl">
             <div className="mb-3 flex items-center gap-2">
-              <Brain className="h-4 w-4 text-[#7C3AED]" />
+              <Brain className="h-4 w-4 text-[#DC2626]" />
               <h3 className="text-sm font-medium text-[#94A3B8]">Model</h3>
             </div>
             <div className="space-y-2">
@@ -303,7 +303,7 @@ export default function EmbeddingsPage() {
                   onClick={() => setSelectedModel(i)}
                   className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition-colors ${
                     selectedModel === i
-                      ? "bg-[#7C3AED]/10 text-[#A78BFA]"
+                      ? "bg-[#DC2626]/10 text-[#FCA5A5]"
                       : "text-[#94A3B8] hover:bg-white/[0.04]"
                   }`}
                 >
@@ -320,7 +320,7 @@ export default function EmbeddingsPage() {
           {/* Stats */}
           <div className="rounded-xl border border-white/[0.06] bg-[#0A0F1E]/60 p-4 backdrop-blur-xl">
             <div className="mb-3 flex items-center gap-2">
-              <Layers className="h-4 w-4 text-[#7C3AED]" />
+              <Layers className="h-4 w-4 text-[#DC2626]" />
               <h3 className="text-sm font-medium text-[#94A3B8]">Statistics</h3>
             </div>
             <div className="space-y-2 text-xs">

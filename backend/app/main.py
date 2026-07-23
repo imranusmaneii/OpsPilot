@@ -17,6 +17,7 @@ from app.domains.integrations.routes import router as integrations_router
 from app.domains.playground import router as playground_router
 from app.domains.cost import router as cost_router
 
+
 setup_logging(log_level=settings.LOG_LEVEL, log_format=settings.LOG_FORMAT)
 
 app = FastAPI(

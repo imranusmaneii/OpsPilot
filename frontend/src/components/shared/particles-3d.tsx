@@ -1,20 +1,29 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Scene3D } from "./scene-3d";
 
-const PARTICLE_COUNT = 400;
+const PARTICLE_COUNT = 250;
 const SPREAD = 20;
 const DEPTH = 15;
 
 function ParticleField() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
-  const { viewport } = useThree();
+  const { viewport, camera } = useThree();
 
-  const { positions, colors, scales, velocities } = useMemo(() => {
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    };
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  const { positions, colors, baseScales, velocities } = useMemo(() => {
     const pos = new Float32Array(PARTICLE_COUNT * 3);
     const col = new Float32Array(PARTICLE_COUNT * 3);
     const scl = new Float32Array(PARTICLE_COUNT);
@@ -30,7 +39,7 @@ function ParticleField() {
       pos[i3 + 2] = (Math.random() - 0.5) * DEPTH - 3;
 
       const t = Math.random();
-      const color = t < 0.5 ? redColor : blueColor;
+      const color = t < 0.65 ? redColor : blueColor;
       col[i3] = color.r;
       col[i3 + 1] = color.g;
       col[i3 + 2] = color.b;
@@ -42,10 +51,11 @@ function ParticleField() {
       vel[i3 + 2] = (Math.random() - 0.5) * 0.001;
     }
 
-    return { positions: pos, colors: col, scales: scl, velocities: vel };
+    return { positions: pos, colors: col, baseScales: scl, velocities: vel };
   }, []);
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
+  const bgColor = useMemo(() => new THREE.Color("#050810"), []);
 
   useFrame((state) => {
     if (!meshRef.current) return;
@@ -53,6 +63,8 @@ function ParticleField() {
     const time = state.clock.getElapsedTime();
     const mx = mouseRef.current.x * 0.3;
     const my = mouseRef.current.y * 0.3;
+
+    const camPos = camera.position;
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const i3 = i * 3;
@@ -67,26 +79,44 @@ function ParticleField() {
 
       dummy.position.set(x, y, z);
 
-      const distFromCenter = Math.sqrt(x * x + y * y + z * z);
-      const fogFactor = Math.max(0, 1 - distFromCenter / 15);
-      const pulse = 0.8 + Math.sin(time * 2 + i) * 0.2;
-      dummy.scale.setScalar(scales[i] * fogFactor * pulse);
+      const distFromCamera = Math.abs(z - camPos.z);
+      const depthNorm = Math.min(1, distFromCamera / 15);
+      const sizeMultiplier = THREE.MathUtils.lerp(1.5, 0.4, depthNorm);
+      const pulse = 0.85 + Math.sin(time * 2 + i) * 0.15;
+      dummy.scale.setScalar(baseScales[i] * sizeMultiplier * pulse);
 
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
+
+      const opacityAttr = meshRef.current.geometry.getAttribute("opacity");
+      if (opacityAttr) {
+        opacityAttr.setX(i, THREE.MathUtils.lerp(0.7, 0.08, depthNorm));
+      }
     }
 
     meshRef.current.instanceMatrix.needsUpdate = true;
+    const opacityAttr = meshRef.current.geometry.getAttribute("opacity");
+    if (opacityAttr) opacityAttr.needsUpdate = true;
   });
+
+  const opacityArray = useMemo(() => {
+    const arr = new Float32Array(PARTICLE_COUNT);
+    for (let i = 0; i < PARTICLE_COUNT; i++) arr[i] = 0.5;
+    return arr;
+  }, []);
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, PARTICLE_COUNT]}>
-      <sphereGeometry args={[1, 6, 6]} />
+      <sphereGeometry args={[1, 6, 6]}>
+        <instancedBufferAttribute attach="attributes-opacity" args={[opacityArray, 1]} />
+      </sphereGeometry>
       <meshBasicMaterial
-        color="#DC2626"
+        vertexColors
         transparent
-        opacity={0.6}
+        opacity={0.5}
         toneMapped={false}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
       />
     </instancedMesh>
   );
@@ -103,6 +133,7 @@ export function Particles3DBackground() {
         camera={{ position: [0, 0, 8], fov: 60 }}
         dpr={[1, 1.5]}
         gl={{ alpha: true }}
+        transparent
         disablePostProcessing
       >
         <ParticleField />

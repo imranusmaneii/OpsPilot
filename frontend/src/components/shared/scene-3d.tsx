@@ -13,6 +13,7 @@ interface Scene3DProps {
   dpr?: number | [number, number];
   gl?: Record<string, unknown>;
   disablePostProcessing?: boolean;
+  transparent?: boolean;
 }
 
 export function Scene3D({
@@ -24,6 +25,7 @@ export function Scene3D({
   dpr = [1, 2],
   gl,
   disablePostProcessing = false,
+  transparent = false,
 }: Scene3DProps) {
   const cameraProps = {
     position: [0, 0, 5] as [number, number, number],
@@ -49,8 +51,8 @@ export function Scene3D({
       dpr={dpr}
       gl={glProps}
     >
-      <color attach="background" args={["#050810"]} />
-      <fog attach="fog" args={["#050810", 8, 25]} />
+      {!transparent && <color attach="background" args={["#050810"]} />}
+      {!transparent && <fog attach="fog" args={["#050810", 8, 25]} />}
       <ambientLight intensity={0.15} />
       <directionalLight position={[5, 5, 5]} intensity={0.3} />
       <Suspense fallback={null}>

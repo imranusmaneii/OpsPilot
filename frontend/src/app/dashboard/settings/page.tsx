@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { RoundedBox } from "@react-three/drei";
+import * as THREE from "three";
 import {
   User,
   Key,
@@ -18,6 +22,7 @@ import {
   Moon,
   Sun,
 } from "lucide-react";
+import { CardTilt } from "@/components/shared/card-tilt";
 
 type Theme = "dark" | "midnight" | "oled";
 type AccentColor = string;
@@ -36,6 +41,189 @@ const THEMES: { label: string; value: Theme; icon: typeof Moon; bg: string }[] =
   { label: "Midnight", value: "midnight", icon: Monitor, bg: "bg-[#0B1120]" },
   { label: "OLED", value: "oled", icon: Sun, bg: "bg-black" },
 ];
+
+function AvatarCrystal() {
+  const meshRef = useRef<THREE.Mesh>(null);
+  useFrame((_, delta) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += delta * 0.3;
+      meshRef.current.rotation.x += delta * 0.15;
+    }
+  });
+  return (
+    <RoundedBox ref={meshRef} args={[2.2, 2.2, 0.3]} radius={0.15} smoothness={4}>
+      <meshPhysicalMaterial
+        color="#DC2626"
+        transmission={0.7}
+        roughness={0.15}
+        metalness={0.1}
+        thickness={0.8}
+        clearcoat={1}
+        clearcoatRoughness={0.1}
+        ior={1.5}
+        envMapIntensity={1.5}
+        emissive="#DC2626"
+        emissiveIntensity={0.15}
+      />
+    </RoundedBox>
+  );
+}
+
+function ToggleOrb({ active }: { active: boolean }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  useFrame((_, delta) => {
+    if (meshRef.current) {
+      const target = active ? 1 : 0.3;
+      const current = (meshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity;
+      (meshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity += (target - current) * delta * 5;
+      meshRef.current.rotation.y += delta * 0.5;
+    }
+  });
+  return (
+    <mesh ref={meshRef} scale={active ? 1.1 : 0.8}>
+      <sphereGeometry args={[0.5, 24, 24]} />
+      <meshStandardMaterial
+        color={active ? "#DC2626" : "#475569"}
+        emissive={active ? "#DC2626" : "#475569"}
+        emissiveIntensity={active ? 1 : 0.1}
+        roughness={0.2}
+        metalness={0.8}
+      />
+    </mesh>
+  );
+}
+
+function UsageRing({ percentage, color }: { percentage: number; color: string }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const targetAngle = (percentage / 100) * Math.PI * 2;
+  const currentAngle = useRef(0);
+
+  useFrame((_, delta) => {
+    if (meshRef.current) {
+      currentAngle.current += (targetAngle - currentAngle.current) * delta * 3;
+      meshRef.current.rotation.z = -currentAngle.current;
+      meshRef.current.rotation.y += delta * 0.3;
+    }
+  });
+
+  return (
+    <group>
+      <mesh>
+        <torusGeometry args={[1, 0.08, 16, 64]} />
+        <meshStandardMaterial color="#1a1a2e" roughness={0.8} />
+      </mesh>
+      <mesh ref={meshRef}>
+        <torusGeometry args={[1, 0.1, 16, 64, targetAngle]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.8}
+          roughness={0.3}
+          metalness={0.7}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function SessionOrb() {
+  const meshRef = useRef<THREE.Mesh>(null);
+  useFrame((_, delta) => {
+    if (meshRef.current) {
+      const t = Date.now() * 0.002;
+      (meshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5 + Math.sin(t) * 0.3;
+      meshRef.current.rotation.y += delta * 0.4;
+    }
+  });
+  return (
+    <mesh ref={meshRef} scale={0.6}>
+      <icosahedronGeometry args={[1, 1]} />
+      <meshStandardMaterial
+        color="#059669"
+        emissive="#059669"
+        emissiveIntensity={0.8}
+        roughness={0.2}
+        metalness={0.6}
+      />
+    </mesh>
+  );
+}
+
+function ThemePreview({ bg }: { bg: string }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  useFrame((_, delta) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += delta * 0.4;
+      meshRef.current.rotation.x += delta * 0.2;
+    }
+  });
+  const color = bg === "bg-black" ? "#000000" : bg === "bg-[#0B1120]" ? "#0B1120" : "#050810";
+  return (
+    <group>
+      <ambientLight intensity={0.3} />
+      <pointLight position={[2, 2, 3]} intensity={1} color="#ffffff" />
+      <pointLight position={[-2, -1, 2]} intensity={0.5} color="#DC2626" />
+      <RoundedBox ref={meshRef} args={[1.5, 1.5, 1.5]} radius={0.2} smoothness={4}>
+        <meshStandardMaterial color={color} roughness={0.4} metalness={0.6} />
+      </RoundedBox>
+    </group>
+  );
+}
+
+function AccentSphere({ color }: { color: string }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  useFrame((_, delta) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += delta * 0.3;
+      const t = Date.now() * 0.002;
+      (meshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.4 + Math.sin(t) * 0.2;
+    }
+  });
+  return (
+    <group>
+      <ambientLight intensity={0.3} />
+      <pointLight position={[2, 2, 3]} intensity={1} color={color} />
+      <mesh ref={meshRef}>
+        <sphereGeometry args={[0.8, 32, 32]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.5}
+          roughness={0.2}
+          metalness={0.7}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function GlowingKeyIcon({ active }: { active: boolean }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  useFrame((_, delta) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += delta * 0.5;
+      const t = Date.now() * 0.002;
+      (meshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
+        active ? 0.6 + Math.sin(t) * 0.3 : 0.1;
+    }
+  });
+  return (
+    <group>
+      <ambientLight intensity={active ? 0.5 : 0.2} />
+      <pointLight position={[2, 2, 3]} intensity={active ? 1.5 : 0.3} color={active ? "#DC2626" : "#475569"} />
+      <mesh ref={meshRef} scale={0.8}>
+        <icosahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial
+          color={active ? "#DC2626" : "#475569"}
+          emissive={active ? "#DC2626" : "#475569"}
+          emissiveIntensity={active ? 0.8 : 0.1}
+          roughness={0.3}
+          metalness={0.7}
+        />
+      </mesh>
+    </group>
+  );
+}
 
 function applyTheme(theme: Theme, accent: string) {
   const root = document.documentElement;
@@ -154,11 +342,23 @@ export default function SettingsPage() {
         <div className="flex-1 space-y-6">
           {activeTab === "profile" && (
             <div className="space-y-6">
-              <div className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-6 backdrop-blur-xl">
+              <CardTilt className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-6 backdrop-blur-xl" tiltAmount={4} perspective={1000}>
                 <h3 className="mb-4 text-lg font-semibold text-white">Profile Information</h3>
                 <div className="flex items-center gap-6 mb-6">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#DC2626] to-[#2563EB] text-2xl font-bold text-white shadow-lg shadow-[#DC2626]/20">
-                    OP
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl">
+                    <Canvas
+                      gl={{ alpha: true, antialias: true }}
+                      camera={{ position: [0, 0, 3.5], fov: 40 }}
+                      style={{ background: "transparent" }}
+                    >
+                      <ambientLight intensity={0.4} />
+                      <pointLight position={[3, 3, 5]} intensity={1.2} color="#DC2626" />
+                      <pointLight position={[-3, -2, 4]} intensity={0.6} color="#2563EB" />
+                      <AvatarCrystal />
+                    </Canvas>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="text-2xl font-bold text-white drop-shadow-lg z-10">OP</span>
+                    </div>
                   </div>
                   <div>
                     <p className="text-lg font-semibold text-white">Admin User</p>
@@ -200,11 +400,15 @@ export default function SettingsPage() {
                     />
                   </div>
                 </div>
-              </div>
+              </CardTilt>
               <div className="flex justify-end">
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#991B1B] hover:shadow-lg hover:shadow-[#DC2626]/25"
+                  className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 ${
+                    saved
+                      ? "bg-emerald-600 shadow-lg shadow-emerald-500/30 scale-[0.97]"
+                      : "bg-[#DC2626] hover:bg-[#991B1B] hover:shadow-lg hover:shadow-[#DC2626]/25 active:scale-[0.97] active:translate-y-px"
+                  }`}
                 >
                   {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                   {saved ? "Saved!" : "Save Changes"}
@@ -229,8 +433,14 @@ export default function SettingsPage() {
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#DC2626]/10">
-                      <Sparkles className="h-5 w-5 text-[#DC2626]" />
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl">
+                      <Canvas
+                        gl={{ alpha: true, antialias: true }}
+                        camera={{ position: [0, 0, 2.5], fov: 35 }}
+                        style={{ background: "transparent" }}
+                      >
+                        <GlowingKeyIcon active={true} />
+                      </Canvas>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -260,8 +470,14 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.04]">
-                      <Key className="h-5 w-5 text-[#475569]" />
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl">
+                      <Canvas
+                        gl={{ alpha: true, antialias: true }}
+                        camera={{ position: [0, 0, 2.5], fov: 35 }}
+                        style={{ background: "transparent" }}
+                      >
+                        <GlowingKeyIcon active={false} />
+                      </Canvas>
                     </div>
                     <div className="flex-1">
                       <span className="text-xs font-medium text-[#64748B]">Development</span>
@@ -279,29 +495,62 @@ export default function SettingsPage() {
               <div className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-6 backdrop-blur-xl">
                 <h3 className="mb-3 text-lg font-semibold text-white">Usage Limits</h3>
                 <div className="grid gap-4 md:grid-cols-3">
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                    <p className="text-xs text-[#64748B]">Requests Today</p>
-                    <p className="mt-1 text-2xl font-bold text-white">1,247</p>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className="h-full w-[62%] rounded-full bg-[#DC2626]" />
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 flex flex-col items-center">
+                    <div className="relative h-28 w-28">
+                      <Canvas
+                        gl={{ alpha: true, antialias: true }}
+                        camera={{ position: [0, 0, 3.5], fov: 40 }}
+                        style={{ background: "transparent" }}
+                      >
+                        <ambientLight intensity={0.3} />
+                        <pointLight position={[3, 3, 5]} intensity={1} color="#DC2626" />
+                        <UsageRing percentage={62} color="#DC2626" />
+                      </Canvas>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-sm font-bold text-white">62%</span>
+                      </div>
                     </div>
-                    <p className="mt-1 text-[10px] text-[#475569]">62% of 2,000 daily limit</p>
+                    <p className="mt-2 text-xs text-[#64748B]">Requests Today</p>
+                    <p className="text-lg font-bold text-white">1,247</p>
+                    <p className="text-[10px] text-[#475569]">of 2,000 daily limit</p>
                   </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                    <p className="text-xs text-[#64748B]">Tokens This Month</p>
-                    <p className="mt-1 text-2xl font-bold text-white">2.4M</p>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className="h-full w-[48%] rounded-full bg-[#2563EB]" />
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 flex flex-col items-center">
+                    <div className="relative h-28 w-28">
+                      <Canvas
+                        gl={{ alpha: true, antialias: true }}
+                        camera={{ position: [0, 0, 3.5], fov: 40 }}
+                        style={{ background: "transparent" }}
+                      >
+                        <ambientLight intensity={0.3} />
+                        <pointLight position={[3, 3, 5]} intensity={1} color="#2563EB" />
+                        <UsageRing percentage={48} color="#2563EB" />
+                      </Canvas>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-sm font-bold text-white">48%</span>
+                      </div>
                     </div>
-                    <p className="mt-1 text-[10px] text-[#475569]">48% of 5M monthly limit</p>
+                    <p className="mt-2 text-xs text-[#64748B]">Tokens This Month</p>
+                    <p className="text-lg font-bold text-white">2.4M</p>
+                    <p className="text-[10px] text-[#475569]">of 5M monthly limit</p>
                   </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                    <p className="text-xs text-[#64748B]">Cost This Month</p>
-                    <p className="mt-1 text-2xl font-bold text-white">$18.42</p>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className="h-full w-[18%] rounded-full bg-emerald-500" />
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 flex flex-col items-center">
+                    <div className="relative h-28 w-28">
+                      <Canvas
+                        gl={{ alpha: true, antialias: true }}
+                        camera={{ position: [0, 0, 3.5], fov: 40 }}
+                        style={{ background: "transparent" }}
+                      >
+                        <ambientLight intensity={0.3} />
+                        <pointLight position={[3, 3, 5]} intensity={1} color="#059669" />
+                        <UsageRing percentage={18} color="#059669" />
+                      </Canvas>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-sm font-bold text-white">18%</span>
+                      </div>
                     </div>
-                    <p className="mt-1 text-[10px] text-[#475569]">18% of $100 budget</p>
+                    <p className="mt-2 text-xs text-[#64748B]">Cost This Month</p>
+                    <p className="text-lg font-bold text-white">$18.42</p>
+                    <p className="text-[10px] text-[#475569]">of $100 budget</p>
                   </div>
                 </div>
               </div>
@@ -309,7 +558,15 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "notifications" && (
-            <div className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-6 backdrop-blur-xl">
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: { transition: { staggerChildren: 0.06 } },
+              }}
+              className="rounded-2xl border border-white/[0.06] bg-[#0A0F1E]/60 p-6 backdrop-blur-xl"
+            >
               <h3 className="mb-4 text-lg font-semibold text-white">Notification Preferences</h3>
               <div className="space-y-4">
                 {[
@@ -320,7 +577,16 @@ export default function SettingsPage() {
                   { key: "weeklySummary" as const, label: "Weekly usage summary", desc: "Receive a weekly analytics digest" },
                   { key: "securityAlerts" as const, label: "Security alerts", desc: "Critical security notifications" },
                 ].map((item) => (
-                  <div key={item.key} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <motion.div
+                    key={item.key}
+                    variants={{
+                      hidden: { opacity: 0, y: 12, rotateX: -4 },
+                      visible: { opacity: 1, y: 0, rotateX: 0 },
+                    }}
+                    transition={{ duration: 0.35, ease: "easeOut" }}
+                    className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-4"
+                    style={{ perspective: 600 }}
+                  >
                     <div>
                       <p className="text-sm font-medium text-white">{item.label}</p>
                       <p className="text-xs text-[#475569]">{item.desc}</p>
@@ -332,29 +598,46 @@ export default function SettingsPage() {
                           [item.key]: !prev[item.key],
                         }))
                       }
-                      className={`relative h-6 w-11 rounded-full transition-colors ${
-                        notifications[item.key] ? "bg-[#DC2626]" : "bg-white/[0.08]"
+                      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 ${
+                        notifications[item.key] ? "bg-[#DC2626]/80" : "bg-white/[0.08]"
                       }`}
+                      style={{
+                        boxShadow: notifications[item.key]
+                          ? "0 0 12px 2px rgba(220,38,38,0.3), inset 0 1px 2px rgba(0,0,0,0.2)"
+                          : "inset 0 1px 2px rgba(0,0,0,0.2)",
+                      }}
                     >
                       <span
-                        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                        className={`absolute top-0.5 h-5 w-5 rounded-full transition-all duration-200 ${
                           notifications[item.key] ? "left-[22px]" : "left-0.5"
                         }`}
+                        style={{
+                          background: notifications[item.key]
+                            ? "radial-gradient(circle at 35% 35%, #ffffff, #fca5a5 60%, #dc2626)"
+                            : "radial-gradient(circle at 35% 35%, #e2e8f0, #94a3b8 60%, #64748b)",
+                          boxShadow: notifications[item.key]
+                            ? "0 0 8px 2px rgba(220,38,38,0.4), 0 2px 4px rgba(0,0,0,0.3)"
+                            : "0 1px 3px rgba(0,0,0,0.3)",
+                        }}
                       />
                     </button>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#991B1B] hover:shadow-lg hover:shadow-[#DC2626]/25"
+                  className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 ${
+                    saved
+                      ? "bg-emerald-600 shadow-lg shadow-emerald-500/30 scale-[0.97]"
+                      : "bg-[#DC2626] hover:bg-[#991B1B] hover:shadow-lg hover:shadow-[#DC2626]/25 active:scale-[0.97] active:translate-y-px"
+                  }`}
                 >
                   {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                   {saved ? "Saved!" : "Save Preferences"}
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {activeTab === "security" && (
@@ -396,17 +679,39 @@ export default function SettingsPage() {
                     { device: "Chrome on Windows", location: "Lagos, Nigeria", time: "Current session", current: true },
                     { device: "Safari on macOS", location: "Lagos, Nigeria", time: "2 hours ago", current: false },
                   ].map((session, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-white">{session.device}</p>
-                          {session.current && (
-                            <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                              Current
-                            </span>
+                    <div
+                      key={i}
+                      className={`flex items-center justify-between rounded-xl border p-4 transition-all ${
+                        session.current
+                          ? "border-emerald-500/20 bg-emerald-500/[0.04] shadow-[0_0_20px_4px_rgba(5,150,105,0.08)]"
+                          : "border-white/[0.06] bg-white/[0.02]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-8 w-8 shrink-0">
+                          {session.current ? (
+                            <Canvas
+                              gl={{ alpha: true, antialias: true }}
+                              camera={{ position: [0, 0, 2.5], fov: 35 }}
+                              style={{ background: "transparent" }}
+                            >
+                              <SessionOrb />
+                            </Canvas>
+                          ) : (
+                            <div className="h-full w-full rounded-full bg-[#475569]/30" />
                           )}
                         </div>
-                        <p className="text-xs text-[#475569]">{session.location} &middot; {session.time}</p>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-white">{session.device}</p>
+                            {session.current && (
+                              <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                                Current
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[#475569]">{session.location} &middot; {session.time}</p>
+                        </div>
                       </div>
                       {!session.current && (
                         <button className="text-xs text-[#EF4444] hover:text-[#DC2626]">Revoke</button>
@@ -433,16 +738,24 @@ export default function SettingsPage() {
                         <button
                           key={theme.value}
                           onClick={() => setCurrentTheme(theme.value)}
-                          className={`flex items-center gap-3 rounded-xl border px-6 py-3 text-sm font-medium transition-all ${
+                          className={`flex flex-col items-center gap-2 rounded-xl border px-5 py-4 text-sm font-medium transition-all ${
                             isActive
-                              ? "border-[#DC2626]/40 bg-[#DC2626]/10 text-[#FCA5A5]"
+                              ? "border-[#DC2626]/40 bg-[#DC2626]/10 text-[#FCA5A5] shadow-[0_0_20px_4px_rgba(220,38,38,0.1)]"
                               : "border-white/[0.06] bg-white/[0.02] text-[#475569] hover:bg-white/[0.04] hover:text-[#94A3B8]"
                           }`}
                         >
-                          <Icon className="h-4 w-4" />
-                          <div className="text-left">
-                            <div>{theme.label}</div>
-                            <div className={`mt-1 h-2 w-8 rounded-full ${theme.bg} border border-white/[0.1]`} />
+                          <div className="relative h-16 w-16 overflow-hidden rounded-lg">
+                            <Canvas
+                              gl={{ alpha: true, antialias: true }}
+                              camera={{ position: [0, 0, 3.5], fov: 35 }}
+                              style={{ background: "transparent" }}
+                            >
+                              <ThemePreview bg={theme.bg} />
+                            </Canvas>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Icon className="h-3.5 w-3.5" />
+                            <span>{theme.label}</span>
                           </div>
                         </button>
                       );
@@ -463,14 +776,14 @@ export default function SettingsPage() {
                           className="group flex flex-col items-center gap-1.5"
                         >
                           <div
-                            className={`h-9 w-9 rounded-full transition-all hover:scale-110 ${
-                              isActive ? "ring-2 ring-offset-2 ring-offset-[#0A0F1E]" : ""
+                            className={`h-9 w-9 rounded-full transition-all duration-200 hover:scale-110 ${
+                              isActive ? "scale-110" : ""
                             }`}
                             style={{
                               backgroundColor: color.value,
                               boxShadow: isActive
-                                ? `0 0 0 2px #0A0F1E, 0 0 0 4px ${color.value}`
-                                : undefined,
+                                ? `0 0 0 2px #0A0F1E, 0 0 0 4px ${color.value}, 0 0 16px 4px ${color.value}40`
+                                : `0 0 0 0px transparent`,
                             }}
                           />
                           <span className={`text-[10px] ${isActive ? "text-white" : "text-[#475569]"}`}>
@@ -487,10 +800,15 @@ export default function SettingsPage() {
                   <p className="mb-3 text-sm font-medium text-white">Preview</p>
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: currentAccent }}
-                      />
+                      <div className="relative h-6 w-6 shrink-0">
+                        <Canvas
+                          gl={{ alpha: true, antialias: true }}
+                          camera={{ position: [0, 0, 2.5], fov: 35 }}
+                          style={{ background: "transparent" }}
+                        >
+                          <AccentSphere color={currentAccent} />
+                        </Canvas>
+                      </div>
                       <div className="h-2 flex-1 rounded-full bg-white/[0.06]">
                         <div
                           className="h-full w-3/4 rounded-full transition-colors"
@@ -498,8 +816,11 @@ export default function SettingsPage() {
                         />
                       </div>
                       <button
-                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors"
-                        style={{ backgroundColor: currentAccent }}
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-all duration-150 active:scale-[0.97]"
+                        style={{
+                          backgroundColor: currentAccent,
+                          boxShadow: `0 0 12px 2px ${currentAccent}30`,
+                        }}
                       >
                         Button
                       </button>
@@ -517,14 +838,27 @@ export default function SettingsPage() {
                     </div>
                     <button
                       onClick={() => setCompactSidebar(!compactSidebar)}
-                      className={`relative h-6 w-11 rounded-full transition-colors ${
-                        compactSidebar ? "bg-[#DC2626]" : "bg-white/[0.08]"
+                      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 ${
+                        compactSidebar ? "bg-[#DC2626]/80" : "bg-white/[0.08]"
                       }`}
+                      style={{
+                        boxShadow: compactSidebar
+                          ? "0 0 12px 2px rgba(220,38,38,0.3), inset 0 1px 2px rgba(0,0,0,0.2)"
+                          : "inset 0 1px 2px rgba(0,0,0,0.2)",
+                      }}
                     >
                       <span
-                        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                        className={`absolute top-0.5 h-5 w-5 rounded-full transition-all duration-200 ${
                           compactSidebar ? "left-[22px]" : "left-0.5"
                         }`}
+                        style={{
+                          background: compactSidebar
+                            ? "radial-gradient(circle at 35% 35%, #ffffff, #fca5a5 60%, #dc2626)"
+                            : "radial-gradient(circle at 35% 35%, #e2e8f0, #94a3b8 60%, #64748b)",
+                          boxShadow: compactSidebar
+                            ? "0 0 8px 2px rgba(220,38,38,0.4), 0 2px 4px rgba(0,0,0,0.3)"
+                            : "0 1px 3px rgba(0,0,0,0.3)",
+                        }}
                       />
                     </button>
                   </div>
@@ -534,7 +868,11 @@ export default function SettingsPage() {
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 rounded-xl bg-[#DC2626] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#991B1B] hover:shadow-lg hover:shadow-[#DC2626]/25"
+                  className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 ${
+                    saved
+                      ? "bg-emerald-600 shadow-lg shadow-emerald-500/30 scale-[0.97]"
+                      : "bg-[#DC2626] hover:bg-[#991B1B] hover:shadow-lg hover:shadow-[#DC2626]/25 active:scale-[0.97] active:translate-y-px"
+                  }`}
                 >
                   {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                   {saved ? "Saved!" : "Save Preferences"}
